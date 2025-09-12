@@ -1,0 +1,5 @@
+Clipper	: user= test@clipbox.com password= testpassword123 /dashboard/clipper
+
+Annonceur : user= advertiser@clipbox.com password= advertiser123 /dashboard/advertiser
+
+Admin :	user= admin@clipbox.com	password= admin123 /dashboard/admin

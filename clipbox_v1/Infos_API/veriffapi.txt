@@ -1,0 +1,8 @@
+Base URL
+https://stationapi.veriff.com
+API key
+7562caab-6b45-4aeb-9660-74c0d384f7e5
+
+Master signature key
+9 Aug 2025
+f2c6d946-f2a5-4759-b4d4-43e9a3a0598a
