@@ -33,10 +33,11 @@ export default function ClipperSubscriptionPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
   
   const currentPlan = {
     name: 'Pro',
-    price: '€29',
+    price: '€27',
     nextBilling: '15 Avril 2024',
     status: 'active'
   };
@@ -49,9 +50,11 @@ export default function ClipperSubscriptionPage() {
       description: 'Pour débuter sur ClipBox',
       color: 'gray',
       features: [
-        { name: 'Jusqu\'à 3 campagnes par mois', included: true },
-        { name: 'Commission standard (20%)', included: true },
-        { name: 'Paiements mensuels', included: true },
+        { name: '1 campagne simultanée', included: true },
+        { name: 'Maximum 1 compte par réseau social', included: true },
+        { name: 'Maximum 2 vidéos par campagne', included: true },
+        { name: 'Commission de 20%', included: true },
+        { name: 'Retrait bi-mensuel', included: true },
         { name: 'Support par email', included: true },
         { name: 'Statistiques de base', included: true },
         { name: 'Profil public basique', included: true },
@@ -66,14 +69,16 @@ export default function ClipperSubscriptionPage() {
     {
       id: 'starter',
       name: 'Starter',
-      price: { monthly: 9, yearly: 90 },
+      price: { monthly: 14, yearly: 140 },
       description: 'Pour les créateurs réguliers',
       color: 'blue',
       badge: null,
       features: [
-        { name: 'Jusqu\'à 10 campagnes par mois', included: true },
+        { name: '3 campagnes simultanées', included: true },
+        { name: 'Maximum 2 comptes par réseau social', included: true },
+        { name: 'Maximum 6 vidéos par campagne', included: true },
         { name: 'Commission réduite (15%)', included: true },
-        { name: 'Paiements bi-mensuels', included: true },
+        { name: 'Retrait hebdomadaire', included: true },
         { name: 'Support par email et chat', included: true },
         { name: 'Statistiques détaillées', included: true },
         { name: 'Profil public personnalisé', included: true },
@@ -88,43 +93,47 @@ export default function ClipperSubscriptionPage() {
     {
       id: 'pro',
       name: 'Pro',
-      price: { monthly: 29, yearly: 290 },
+      price: { monthly: 27, yearly: 270 },
       description: 'Pour les créateurs professionnels',
       color: 'purple',
       badge: 'Populaire',
       features: [
-        { name: 'Campagnes illimitées', included: true },
+        { name: '8 campagnes simultanées', included: true },
+        { name: 'Campagnes illimitées au total', included: true },
+        { name: 'Maximum 4 comptes par réseau social', included: true },
+        { name: 'Maximum 10 vidéos par campagne', included: true },
         { name: 'Commission réduite (10%)', included: true },
-        { name: 'Paiements hebdomadaires', included: true },
-        { name: 'Support prioritaire 24/7', included: true },
+        { name: 'Retraits instantanés', included: true },
+        { name: 'Support prioritaire', included: true },
         { name: 'Analytics complets', included: true },
         { name: 'Profil premium avec portfolio', included: true },
         { name: 'Accès prioritaire aux campagnes', included: true },
         { name: 'Badge vérifié Pro', included: true },
         { name: 'Analytics avancés avec IA', included: true },
-        { name: 'Support dédié', included: true },
         { name: 'Formations exclusives', included: true },
         { name: 'Outils de création IA', included: false }
       ]
     },
     {
-      id: 'elite',
-      name: 'Elite',
-      price: { monthly: 99, yearly: 990 },
+      id: 'goat',
+      name: 'Goat',
+      price: { monthly: 49, yearly: 490 },
       description: 'Pour les top créateurs',
       color: 'yellow',
       badge: 'Exclusif',
       features: [
-        { name: 'Tout illimité', included: true },
+        { name: 'Campagnes illimitées', included: true },
+        { name: 'Comptes illimités par réseau social', included: true },
+        { name: 'Vidéos illimitées par campagne', included: true },
         { name: 'Commission minimale (5%)', included: true },
-        { name: 'Paiements instantanés', included: true },
+        { name: 'Retraits instantanés', included: true },
+        { name: 'Support prioritaire 24/7', included: true },
         { name: 'Account manager dédié', included: true },
         { name: 'Analytics prédictifs avec IA', included: true },
         { name: 'Page de marque personnalisée', included: true },
         { name: 'Accès VIP aux campagnes premium', included: true },
-        { name: 'Badge Elite exclusif', included: true },
+        { name: 'Badge Goat exclusif', included: true },
         { name: 'Tableau de bord personnalisé', included: true },
-        { name: 'Support VIP 24/7', included: true },
         { name: 'Masterclass mensuelles', included: true },
         { name: 'Suite complète d\'outils IA', included: true }
       ]
@@ -155,8 +164,16 @@ export default function ClipperSubscriptionPage() {
   ];
 
   const handleUpgrade = (planId: string) => {
-    setSelectedPlan(planId);
-    setShowPaymentModal(true);
+    const currentPlanIndex = plans.findIndex(p => p.name === currentPlan.name);
+    const newPlanIndex = plans.findIndex(p => p.id === planId);
+    
+    if (newPlanIndex < currentPlanIndex) {
+      setSelectedPlan(planId);
+      setShowDowngradeWarning(true);
+    } else {
+      setSelectedPlan(planId);
+      setShowPaymentModal(true);
+    }
   };
 
   const calculateSavings = (monthly: number, yearly: number) => {
@@ -174,6 +191,22 @@ export default function ClipperSubscriptionPage() {
         <p className="text-gray-600 dark:text-gray-400">
           Choisissez le plan qui correspond à vos ambitions
         </p>
+      </div>
+
+      {/* Important Notice */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+              Aucun engagement, aucune contrainte
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Tous nos abonnements sont sans engagement. Vous pouvez changer de plan, mettre en pause ou annuler à tout moment.
+              Votre liberté est notre priorité.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Current Plan */}
@@ -367,7 +400,8 @@ export default function ClipperSubscriptionPage() {
               Puis-je changer de plan à tout moment ?
             </h3>
             <p className="text-gray-600 dark:text-gray-400 ml-7">
-              Oui, vous pouvez upgrader ou downgrader votre plan à tout moment. Les changements prennent effet immédiatement et sont calculés au prorata.
+              Oui, vous pouvez upgrader ou downgrader votre plan à tout moment sans engagement. Les changements prennent effet immédiatement.
+              Attention : lors d'un downgrade, les limites du nouveau plan s'appliquent automatiquement (campagnes, comptes sociaux, vidéos).
             </p>
           </div>
           <div>
@@ -376,7 +410,7 @@ export default function ClipperSubscriptionPage() {
               Comment fonctionnent les commissions réduites ?
             </h3>
             <p className="text-gray-600 dark:text-gray-400 ml-7">
-              Avec un plan premium, ClipBox prélève une commission plus faible sur vos gains. Par exemple, avec le plan Elite, vous gardez 95% de vos revenus au lieu de 80% avec le plan gratuit.
+              Avec un plan premium, ClipBox prélève une commission plus faible sur vos gains. Par exemple, avec le plan Goat, vous gardez 95% de vos revenus au lieu de 80% avec le plan gratuit.
             </p>
           </div>
           <div>
@@ -391,10 +425,11 @@ export default function ClipperSubscriptionPage() {
           <div>
             <h3 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <Info className="w-5 h-5 text-purple-600" />
-              Y a-t-il une période d'essai ?
+              Que se passe-t-il lors d'un downgrade ?
             </h3>
             <p className="text-gray-600 dark:text-gray-400 ml-7">
-              Oui, tous les plans premium incluent une période d'essai de 7 jours. Vous pouvez annuler à tout moment pendant cette période sans être facturé.
+              Lors d'un downgrade, les limites du nouveau plan s'appliquent immédiatement. Les campagnes excédentaires sont mises en pause par date de soumission (les plus récentes d'abord),
+              et les comptes sociaux excédentaires sont automatiquement déconnectés. Vos données restent sauvegardées et seront réactivées si vous upgradez à nouveau.
             </p>
           </div>
         </div>
@@ -491,13 +526,35 @@ export default function ClipperSubscriptionPage() {
               </p>
               <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
                 <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                  <strong>Ce que vous perdrez :</strong>
+                  <strong>Ce que vous perdrez avec le plan {currentPlan.name} :</strong>
                 </p>
                 <ul className="text-sm text-yellow-700 dark:text-yellow-400 mt-2 space-y-1">
-                  <li>• Commission réduite de 10%</li>
-                  <li>• Accès prioritaire aux campagnes</li>
-                  <li>• Analytics avancés</li>
-                  <li>• Support prioritaire 24/7</li>
+                  {currentPlan.name === 'Pro' && (
+                    <>
+                      <li>• 8 campagnes simultanées (retour à 1)</li>
+                      <li>• Commission de 10% (retour à 20%)</li>
+                      <li>• Retraits instantanés (retour à bi-mensuel)</li>
+                      <li>• Maximum 4 comptes par réseau (retour à 1)</li>
+                      <li>• Support prioritaire</li>
+                    </>
+                  )}
+                  {currentPlan.name === 'Starter' && (
+                    <>
+                      <li>• 3 campagnes simultanées (retour à 1)</li>
+                      <li>• Commission de 15% (retour à 20%)</li>
+                      <li>• Retrait hebdomadaire (retour à bi-mensuel)</li>
+                      <li>• Maximum 2 comptes par réseau (retour à 1)</li>
+                    </>
+                  )}
+                  {currentPlan.name === 'Goat' && (
+                    <>
+                      <li>• Campagnes illimitées (retour à 1)</li>
+                      <li>• Commission de 5% (retour à 20%)</li>
+                      <li>• Comptes illimités (retour à 1 par réseau)</li>
+                      <li>• Support prioritaire 24/7</li>
+                      <li>• Account manager dédié</li>
+                    </>
+                  )}
                 </ul>
               </div>
             </div>
@@ -630,6 +687,67 @@ export default function ClipperSubscriptionPage() {
               <button className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <CreditCard className="w-5 h-5" />
                 Confirmer le paiement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Downgrade Warning Modal */}
+      {showDowngradeWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Attention : Downgrade de plan
+              </h3>
+              <button
+                onClick={() => setShowDowngradeWarning(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center justify-center w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-full mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-center mb-4">
+                Vous êtes sur le point de passer à un plan inférieur. Des limitations seront appliquées automatiquement.
+              </p>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
+                  Limitations qui seront appliquées :
+                </p>
+                <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                  <li>• Les campagnes excédentaires seront mises en pause (par date de soumission)</li>
+                  <li>• Les comptes sociaux excédentaires seront déconnectés automatiquement</li>
+                  <li>• Les vidéos excédentaires ne pourront plus être soumises</li>
+                  <li>• La commission sera ajustée selon le nouveau plan</li>
+                  <li>• Les délais de retrait seront modifiés</li>
+                </ul>
+                <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-2">
+                  <strong>Note :</strong> Vos données restent sauvegardées et seront réactivées si vous upgradez à nouveau.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDowngradeWarning(false)}
+                className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  setShowDowngradeWarning(false);
+                  setShowPaymentModal(true);
+                }}
+                className="flex-1 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+              >
+                Continuer le downgrade
               </button>
             </div>
           </div>
