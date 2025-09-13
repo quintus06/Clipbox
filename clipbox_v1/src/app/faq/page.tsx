@@ -35,13 +35,13 @@ export default function FAQPage() {
     },
     {
       category: 'Général',
-      question: "Comment fonctionne Clipbox ?",
-      answer: "Les annonceurs créent des campagnes avec un brief et un budget défini. Les créateurs peuvent ensuite postuler pour participer à ces campagnes. Une fois sélectionnés, ils créent du contenu selon les directives et sont rémunérés en fonction des performances."
+      question: "Y a-t-il une version gratuite ?",
+      answer: "Pour les Clippers : Oui, vous pouvez participer à une campagne en version gratuite et recevoir vos paiements mais vous ne pourrez rejoindre qu'une seule campagne jusqu'à votre sortie de cette dernière. Pour les Annonceurs : Oui mais vous ne pourrez créer qu'une campagne et vous disposerez de retours analytics moins avancés."
     },
     {
       category: 'Général',
-      question: "Clipbox est-il gratuit ?",
-      answer: "L'inscription sur Clipbox est gratuite pour tous. Les créateurs ne paient aucun frais. Les annonceurs paient uniquement pour les campagnes qu'ils lancent, avec une commission de service transparente."
+      question: "Comment fonctionne Clipbox ?",
+      answer: "Les annonceurs créent des campagnes avec un brief et un budget défini. Les créateurs peuvent ensuite postuler pour participer à ces campagnes. Une fois sélectionnés, ils créent du contenu selon les directives et sont rémunérés en fonction des performances."
     },
 
     // Créateurs

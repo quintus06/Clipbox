@@ -50,7 +50,7 @@ export default function HowItWorksPage() {
     {
       icon: <Video className="w-6 h-6" />,
       title: "3. Créez du contenu",
-      description: "Produisez des clips créatifs selon les guidelines de la marque"
+      description: "Produisez des clips créatifs selon les guidelines de l'annonceur"
     },
     {
       icon: <Share2 className="w-6 h-6" />,
@@ -67,18 +67,18 @@ export default function HowItWorksPage() {
   const advertiserSteps = [
     {
       icon: <FileCheck className="w-6 h-6" />,
-      title: "1. Créez votre campagne",
-      description: "Définissez vos objectifs, votre budget et vos guidelines créatives"
+      title: "1. Créez votre compte gratuitement",
+      description: "Créez votre compte en quelques secondes et complétez votre profil annonceur"
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: "2. Sélectionnez vos créateurs",
-      description: "Choisissez parmi notre réseau de créateurs vérifiés ou laissez-les postuler"
+      title: "2. Créez votre campagne",
+      description: "Sélectionnez votre contenu à promouvoir, paramétrez vous-même la rémunération des clippers"
     },
     {
-      icon: <Zap className="w-6 h-6" />,
-      title: "3. Lancez la campagne",
-      description: "Validez les contenus et lancez votre campagne en un clic"
+      icon: <CreditCard className="w-6 h-6" />,
+      title: "3. Rechargez votre balance",
+      description: "Rechargez votre balance pour paramétrer le budget de votre campagne"
     },
     {
       icon: <BarChart3 className="w-6 h-6" />,
@@ -96,7 +96,7 @@ export default function HowItWorksPage() {
     {
       icon: <DollarSign className="w-8 h-8" />,
       title: "Revenus garantis",
-      description: "Gagnez de l'argent pour chaque contenu créé, avec des bonus de performance"
+      description: "Gagnez de l'argent pour chaque contenu créé pour chaque 1000 vues"
     },
     {
       icon: <Shield className="w-8 h-8" />,
@@ -106,20 +106,20 @@ export default function HowItWorksPage() {
     {
       icon: <Award className="w-8 h-8" />,
       title: "Liberté créative",
-      description: "Exprimez votre créativité tout en respectant les guidelines des marques"
+      description: "Exprimez votre créativité tout en respectant les guidelines des annonceurs"
     },
     {
       icon: <Rocket className="w-8 h-8" />,
       title: "Croissance garantie",
-      description: "Développez votre audience et votre influence avec des marques reconnues"
+      description: "Ne perdez plus de temps à chercher du contenu à clipper monétisables sans risques sur les droits d'auteurs"
     }
   ];
 
   const advertiserBenefits = [
     {
       icon: <Target className="w-8 h-8" />,
-      title: "Ciblage précis",
-      description: "Atteignez exactement votre audience cible grâce à nos créateurs spécialisés"
+      title: "Ciblage optimisé",
+      description: "Ne perdez plus de temps et d'argent à cause d'un ciblage mal paramétré"
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
@@ -128,8 +128,8 @@ export default function HowItWorksPage() {
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: "Lancement rapide",
-      description: "De l'idée à la diffusion en moins de 48h"
+      title: "Développement rapide",
+      description: "Développez votre audience, votre visibilité et vos conversions rapidement en passant de la mise en ligne à la diffusion en 48h et grâce aux actions des clippers"
     },
     {
       icon: <Users className="w-8 h-8" />,
@@ -184,7 +184,7 @@ export default function HowItWorksPage() {
             Comment ça marche ?
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Découvrez comment Clipbox révolutionne la collaboration entre marques et créateurs de contenu
+            Découvrez comment Clipbox révolutionne la collaboration entre marques, influenceurs et clippers
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export default function HowItWorksPage() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              Je suis Créateur
+              Je suis Clipper
             </button>
             <button
               onClick={() => setActiveTab('advertiser')}
