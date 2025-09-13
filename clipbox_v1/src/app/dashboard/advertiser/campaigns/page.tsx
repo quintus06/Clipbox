@@ -370,7 +370,19 @@ export default function CampaignsPage() {
       {filteredCampaigns.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredCampaigns.map((campaign) => (
-            <CampaignCard key={campaign.id} campaign={campaign} />
+            <div key={campaign.id} className="relative">
+              <CampaignCard campaign={campaign} />
+              {(campaign.status === 'PAUSED' || campaign.status === 'COMPLETED') && (
+                <div className="absolute top-4 right-4 z-20">
+                  <Link
+                    href={`/dashboard/advertiser/campaigns/${campaign.id}/reactivate`}
+                    className="inline-flex items-center px-3 py-1.5 bg-orange-600 text-white text-xs font-medium rounded-lg hover:bg-orange-700 transition-colors shadow-lg"
+                  >
+                    Réactiver
+                  </Link>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       ) : (

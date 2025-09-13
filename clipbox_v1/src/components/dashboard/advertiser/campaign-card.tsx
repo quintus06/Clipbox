@@ -147,9 +147,12 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
                   </>
                 )}
                 {campaign.status === 'PAUSED' && (
-                  <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+                  <Link
+                    href={`/dashboard/advertiser/campaigns/${campaign.id}/reactivate`}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                  >
                     Réactiver
-                  </button>
+                  </Link>
                 )}
                 <button className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">
                   Archiver

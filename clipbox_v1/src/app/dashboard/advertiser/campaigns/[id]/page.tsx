@@ -17,7 +17,6 @@ import {
   TrendingUp,
   Download,
   Filter,
-  MoreVertical,
   ThumbsUp,
   ThumbsDown,
   ExternalLink,
@@ -407,12 +406,68 @@ export default function CampaignDetailPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Submissions Section */}
-      <div>
+      {/* Metrics Based on Subscription */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Soumissions des clippers
+            Métriques avancées
           </h2>
+          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 rounded-full">
+            Plan Premium
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Taux d'engagement</span>
+              <TrendingUp className="h-4 w-4 text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">6.8%</p>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+1.2% vs mois dernier</p>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Conversions</span>
+              <CheckCircle className="h-4 w-4 text-blue-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">342</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">3.2% taux de conversion</p>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">ROI estimé</span>
+              <DollarSign className="h-4 w-4 text-orange-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">2.4x</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Retour sur investissement</p>
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start">
+            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <p className="ml-2 text-xs text-blue-800 dark:text-blue-200">
+              Ces métriques avancées sont disponibles avec votre abonnement Premium.
+              Les données sont mises à jour toutes les heures.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Submissions Section with Enhanced Display */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Soumissions des clippers
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Gérez et examinez les vidéos soumises pour cette campagne
+            </p>
+          </div>
           <div className="flex items-center space-x-3">
             <select
               value={statusFilter}
@@ -427,118 +482,150 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
+        {/* Submissions Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Approuvées</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {campaign.approvedSubmissions}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-yellow-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">En attente</p>
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              {submissions.filter(s => s.status === 'PENDING').length}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-red-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Rejetées</p>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {campaign.rejectedSubmissions}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {campaign.totalSubmissions}
+            </p>
+          </div>
+        </div>
+
         {/* Submissions List */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Clipper
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Métriques
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Montant
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredSubmissions.map((submission) => (
-                  <tr key={submission.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {submission.clipperName.split(' ').map(n => n[0]).join('')}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {submission.clipperName}
+          {filteredSubmissions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Clipper
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Date de soumission
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Métriques
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Statut
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Lien vidéo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Montant
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredSubmissions.map((submission) => (
+                    <tr key={submission.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center">
+                            <span className="text-sm font-medium text-white">
+                              {submission.clipperName.split(' ').map(n => n[0]).join('')}
+                            </span>
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {submission.platform}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {submission.clipperName}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              @{submission.clipperName.toLowerCase().replace(' ', '_')}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(submission.submittedAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        <div className="flex items-center space-x-4">
-                          <span className="flex items-center">
-                            <Eye className="h-4 w-4 mr-1 text-gray-400" />
-                            {formatNumber(submission.views)}
-                          </span>
-                          <span className="flex items-center">
-                            <ThumbsUp className="h-4 w-4 mr-1 text-gray-400" />
-                            {formatNumber(submission.likes)}
-                          </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {formatDate(submission.submittedAt)}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
-                        {submission.status === 'APPROVED' && <CheckCircle className="h-3 w-3 mr-1" />}
-                        {submission.status === 'PENDING' && <Clock className="h-3 w-3 mr-1" />}
-                        {submission.status === 'REJECTED' && <XCircle className="h-3 w-3 mr-1" />}
-                        {submission.status === 'APPROVED' && 'Approuvée'}
-                        {submission.status === 'PENDING' && 'En attente'}
-                        {submission.status === 'REJECTED' && 'Rejetée'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {submission.status === 'APPROVED' ? formatCurrency(submission.amountEarned) : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(submission.submittedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          <div className="flex flex-col space-y-1">
+                            <span className="flex items-center">
+                              <Eye className="h-3 w-3 mr-1 text-gray-400" />
+                              {formatNumber(submission.views)}
+                            </span>
+                            <span className="flex items-center">
+                              <ThumbsUp className="h-3 w-3 mr-1 text-gray-400" />
+                              {formatNumber(submission.likes)}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
+                          {submission.status === 'APPROVED' && <CheckCircle className="h-3 w-3 mr-1" />}
+                          {submission.status === 'PENDING' && <Clock className="h-3 w-3 mr-1" />}
+                          {submission.status === 'REJECTED' && <XCircle className="h-3 w-3 mr-1" />}
+                          {submission.status === 'APPROVED' && 'Approuvée'}
+                          {submission.status === 'PENDING' && 'En attente'}
+                          {submission.status === 'REJECTED' && 'Rejetée'}
+                        </span>
+                        {submission.reviewNote && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {submission.reviewNote}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <a
                           href={submission.clipUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+                          className="inline-flex items-center text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
                         >
-                          <ExternalLink className="h-5 w-5" />
+                          <span className="mr-1">{submission.platform}</span>
+                          <ExternalLink className="h-3 w-3" />
                         </a>
-                        {submission.status === 'PENDING' && (
-                          <>
-                            <button
-                              onClick={() => handleApproveSubmission(submission.id)}
-                              className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
-                            >
-                              <CheckCircle className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedSubmission(submission);
-                                setShowReviewModal(true);
-                              }}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                            >
-                              <XCircle className="h-5 w-5" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
+                        {submission.status === 'APPROVED' ? formatCurrency(submission.amountEarned) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Aucune soumission trouvée
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                {statusFilter !== 'ALL'
+                  ? "Essayez de modifier vos filtres"
+                  : "Les clippers n'ont pas encore soumis de vidéos pour cette campagne"}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
