@@ -31,15 +31,15 @@ export default function Header() {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg sm:text-xl">C</span>
-            </div>
-            <span className={`text-xl sm:text-2xl font-bold ${
-              isScrolled || isMobileMenuOpen ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'
-            }`}>
-              Clipbox
-            </span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logoclipbox.svg"
+              alt="Clipbox"
+              width={120}
+              height={40}
+              className="h-8 sm:h-10 w-auto"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
