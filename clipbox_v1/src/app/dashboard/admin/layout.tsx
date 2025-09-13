@@ -190,7 +190,10 @@ export default function AdminDashboardLayout({
                   Vous avez {urgentNotifications} notification{urgentNotifications > 1 ? 's' : ''} urgente{urgentNotifications > 1 ? 's' : ''}
                 </span>
               </div>
-              <button className="text-sm text-red-600 dark:text-red-400 hover:underline">
+              <button
+                onClick={() => window.location.href = '/dashboard/admin/notifications'}
+                className="text-sm text-red-600 dark:text-red-400 hover:underline"
+              >
                 Voir tout
               </button>
             </div>
@@ -218,7 +221,19 @@ export default function AdminDashboardLayout({
                     {notification.message}
                   </span>
                 </div>
-                <button className="text-sm text-orange-600 dark:text-orange-400 hover:underline">
+                <button
+                  onClick={() => {
+                    // Navigate based on notification type
+                    if (notification.message.includes('campagnes')) {
+                      window.location.href = '/dashboard/admin/campaigns?status=pending';
+                    } else if (notification.message.includes('tickets support')) {
+                      window.location.href = '/dashboard/admin/support';
+                    } else {
+                      window.location.href = '/dashboard/admin';
+                    }
+                  }}
+                  className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
+                >
                   Traiter
                 </button>
               </div>

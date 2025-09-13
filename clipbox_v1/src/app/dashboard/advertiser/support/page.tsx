@@ -47,8 +47,8 @@ export default function AdvertiserSupportPage() {
       category: 'Campagnes',
       questions: [
         { q: 'Comment créer une campagne efficace ?', a: 'Définissez clairement vos objectifs, ciblez le bon public, et créez un brief détaillé pour les créateurs.' },
-        { q: 'Combien de temps dure une campagne ?', a: 'La durée moyenne est de 2-4 semaines, mais vous pouvez personnaliser selon vos besoins.' },
-        { q: 'Comment sélectionner les meilleurs créateurs ?', a: 'Utilisez nos filtres avancés par niche, engagement, et audience démographique.' },
+        { q: 'Combien de temps dure une campagne ?', a: 'La durée minimale est de 8 semaines. Au-delà de cette limite, vous pouvez personnaliser la durée de votre campagne, la suspendre, ou bien la réactiver si sa date est arrivée à échéance.' },
+        { q: 'Comment sélectionner les meilleurs créateurs ?', a: 'Utilisez nos filtres avancés par niche, engagement, et audience démographique. Vous pouvez contacter notre équipe pour avoir des conseils sur la rémunération des plateformes.' },
         { q: 'Puis-je modifier une campagne en cours ?', a: 'Oui, vous pouvez ajuster le budget et les paramètres, mais pas les créateurs déjà acceptés.' }
       ]
     },
@@ -188,14 +188,17 @@ export default function AdvertiserSupportPage() {
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">+33 1 23 45 67 89</p>
         </a>
 
-        <a
-          href="#"
+        <button
+          onClick={() => {
+            // Open calendar booking link or modal
+            window.open('https://calendly.com/clipbox-support/30min', '_blank');
+          }}
           className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
         >
           <Calendar className="w-6 h-6 sm:w-8 sm:h-8 mb-2 sm:mb-3 text-orange-600 dark:text-orange-400" />
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">Réserver un call</h3>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Avec votre AM</p>
-        </a>
+        </button>
       </div>
 
       {/* Tabs */}

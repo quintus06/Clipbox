@@ -397,7 +397,40 @@ export default function AdvertiserSubscriptionPage() {
                   ))}
                   
                   {plan.features.length > 5 && (
-                    <button className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mt-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Toggle showing all features
+                        const button = e.currentTarget;
+                        const parent = button.parentElement;
+                        const hiddenFeatures = plan.features.slice(5);
+                        
+                        if (button.textContent?.includes('Voir plus')) {
+                          // Show all features
+                          hiddenFeatures.forEach((feature, idx) => {
+                            const div = document.createElement('div');
+                            div.className = 'flex items-start gap-2';
+                            div.innerHTML = `
+                              ${feature.included ?
+                                '<svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                                '<svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+                              }
+                              <span class="text-xs ${feature.included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600'}">${feature.name}</span>
+                            `;
+                            parent?.insertBefore(div, button);
+                          });
+                          button.innerHTML = 'Voir moins <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>';
+                        } else {
+                          // Hide extra features
+                          const allDivs = parent?.querySelectorAll('div.flex');
+                          allDivs?.forEach((div, idx) => {
+                            if (idx >= 5) div.remove();
+                          });
+                          button.innerHTML = 'Voir plus <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+                        }
+                      }}
+                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mt-2"
+                    >
                       Voir plus
                       <ChevronRight className="w-3 h-3" />
                     </button>
@@ -514,10 +547,6 @@ export default function AdvertiserSubscriptionPage() {
                 <button className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                   <CreditCard className="w-5 h-5" />
                   Mettre à jour le moyen de paiement
-                </button>
-                <button className="w-full py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Changer la fréquence de facturation
                 </button>
                 <button className="w-full py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
                   <Building className="w-5 h-5" />

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
   LayoutDashboard,
@@ -25,7 +25,22 @@ interface SidebarProps {
 
 export default function AdvertiserSidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      if (onClose) {
+        onClose();
+      }
+      await logout();
+      // The logout function in auth-context already handles the redirect
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback redirect if logout fails
+      router.push('/');
+    }
+  };
 
   const navigation = [
     {
@@ -174,10 +189,7 @@ export default function AdvertiserSidebar({ onClose }: SidebarProps) {
         {/* Logout button */}
         <div className="p-3 sm:p-4">
           <button
-            onClick={() => {
-              logout();
-              onClose?.();
-            }}
+            onClick={handleLogout}
             className="w-full group flex items-center justify-center px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
           >
             <LogOut className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors flex-shrink-0" />

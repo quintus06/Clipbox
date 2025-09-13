@@ -45,6 +45,8 @@ const mockCampaigns = [
     rejectedSubmissions: 7,
     engagement: 9.2,
     roi: 4.2,
+    viewRate: 78.5,  // Taux de visionnage
+    completionRate: 65.2,  // Taux d'achèvement
     startDate: new Date('2025-01-01'),
     endDate: new Date('2025-03-15'),
     platform: 'TIKTOK'
@@ -64,6 +66,8 @@ const mockCampaigns = [
     rejectedSubmissions: 4,
     engagement: 8.5,
     roi: 3.8,
+    viewRate: 82.3,
+    completionRate: 71.5,
     startDate: new Date('2025-01-10'),
     endDate: new Date('2025-03-20'),
     platform: 'INSTAGRAM'
@@ -83,6 +87,8 @@ const mockCampaigns = [
     rejectedSubmissions: 3,
     engagement: 7.8,
     roi: 3.5,
+    viewRate: 75.8,
+    completionRate: 58.9,
     startDate: new Date('2025-01-15'),
     endDate: new Date('2025-03-25'),
     platform: 'YOUTUBE'
@@ -102,6 +108,8 @@ const mockCampaigns = [
     rejectedSubmissions: 2,
     engagement: 8.9,
     roi: 3.2,
+    viewRate: 88.2,
+    completionRate: 76.4,
     startDate: new Date('2024-11-01'),
     endDate: new Date('2024-12-31'),
     platform: 'TIKTOK'
@@ -121,6 +129,8 @@ const mockCampaigns = [
     rejectedSubmissions: 3,
     engagement: 7.2,
     roi: 2.8,
+    viewRate: 69.5,
+    completionRate: 52.3,
     startDate: new Date('2025-01-20'),
     endDate: new Date('2025-04-01'),
     platform: 'INSTAGRAM'
@@ -164,6 +174,8 @@ const mockChartData = {
     { metric: 'Commentaires', value: 45 },
     { metric: 'Clics', value: 38 },
     { metric: 'Conversions', value: 12 },
+    { metric: 'Taux de visionnage', value: 79 },
+    { metric: 'Taux d\'achèvement', value: 65 },
   ],
   monthlyComparison: {
     current: {
@@ -202,6 +214,8 @@ const mockStats = {
   conversionRate: 3.2,
   costPerEngagement: 2.45,
   averageCostPerClip: 36.40,
+  averageViewRate: 78.6,
+  averageCompletionRate: 64.9,
 };
 
 export default function StatsPage() {
@@ -242,6 +256,8 @@ export default function StatsPage() {
           conversionRate: parseFloat(((campaign.conversions / campaign.clicks) * 100).toFixed(2)),
           costPerEngagement: parseFloat((campaign.spent / (campaign.views * campaign.engagement / 100)).toFixed(2)),
           averageCostPerClip: campaign.submissions > 0 ? parseFloat((campaign.spent / campaign.submissions).toFixed(2)) : 0,
+          averageViewRate: campaign.viewRate,
+          averageCompletionRate: campaign.completionRate,
         };
 
         // Generate campaign-specific chart data
@@ -304,6 +320,8 @@ export default function StatsPage() {
       { metric: 'Commentaires', value: Math.round(campaign.engagement * 5) },
       { metric: 'Clics', value: Math.round((campaign.clicks / campaign.views) * 100) },
       { metric: 'Conversions', value: Math.round((campaign.conversions / campaign.clicks) * 100) },
+      { metric: 'Taux de visionnage', value: Math.round(campaign.viewRate) },
+      { metric: 'Taux d\'achèvement', value: Math.round(campaign.completionRate) },
     ];
   };
 
@@ -444,7 +462,29 @@ export default function StatsPage() {
             <option value="instagram">Instagram</option>
             <option value="youtube">YouTube</option>
           </select>
-          <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
+          <button
+            onClick={() => {
+              // Export statistics data
+              const exportData = {
+                stats: currentStats,
+                campaigns: selectedCampaign === 'all' ? campaigns : campaigns.filter(c => c.id === selectedCampaign),
+                chartData: currentChartData,
+                timeRange,
+                platform: selectedPlatform,
+                exportDate: new Date().toISOString()
+              };
+              const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `statistics-${selectedCampaign === 'all' ? 'all' : selectedCampaign}-${new Date().toISOString().split('T')[0]}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-2"
+          >
             <Download className="h-3 w-3 sm:h-4 sm:w-4" />
             Exporter
           </button>
@@ -693,7 +733,13 @@ export default function StatsPage() {
             {selectedCampaign === 'all' ? 'Top 5 des campagnes' : 'Détails de la campagne'}
           </h2>
           {selectedCampaign === 'all' && (
-            <button className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 hover:underline">
+            <button
+              onClick={() => {
+                // Navigate to campaigns page or show all campaigns
+                window.location.href = '/dashboard/advertiser/campaigns';
+              }}
+              className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 hover:underline"
+            >
               Voir toutes →
             </button>
           )}
@@ -713,8 +759,18 @@ export default function StatsPage() {
               </tr>
             </thead>
             <tbody>
-              {currentChartData.topCampaigns.map((campaign, index) => (
-                <tr key={index} className="border-b border-gray-100 dark:border-gray-700/50">
+              {currentChartData.topCampaigns.map((campaign, index) => {
+                const campaignData = campaigns.find(c => c.title === campaign.name);
+                return (
+                <tr
+                  key={index}
+                  className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (campaignData) {
+                      setSelectedCampaign(campaignData.id);
+                    }
+                  }}
+                >
                   <td className="py-3">
                     <p className="font-medium text-sm text-gray-900 dark:text-white">{campaign.name}</p>
                   </td>
@@ -749,7 +805,7 @@ export default function StatsPage() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -794,9 +850,25 @@ export default function StatsPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Métriques d'engagement</h2>
           <div className="space-y-3">
-            {currentChartData.engagementMetrics.map((metric, index) => (
+            {currentChartData.engagementMetrics.slice(0, 6).map((metric, index) => {
+              const getMetricIcon = (metricName: string) => {
+                switch(metricName) {
+                  case 'Vues': return <Eye className="h-4 w-4 text-gray-400" />;
+                  case 'Likes': return <Activity className="h-4 w-4 text-gray-400" />;
+                  case 'Partages': return <Users className="h-4 w-4 text-gray-400" />;
+                  case 'Commentaires': return <Megaphone className="h-4 w-4 text-gray-400" />;
+                  case 'Clics': return <MousePointer className="h-4 w-4 text-gray-400" />;
+                  case 'Conversions': return <Target className="h-4 w-4 text-gray-400" />;
+                  default: return null;
+                }
+              };
+              
+              return (
               <div key={index} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{metric.metric}</span>
+                <div className="flex items-center gap-2">
+                  {getMetricIcon(metric.metric)}
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{metric.metric}</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
@@ -809,8 +881,58 @@ export default function StatsPage() {
                   </span>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
+          
+          {/* New engagement metrics section */}
+          {currentChartData.engagementMetrics.length > 6 && (
+            <>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Métriques avancées</h3>
+                <div className="space-y-3">
+                  {currentChartData.engagementMetrics.slice(6).map((metric, index) => {
+                    const getAdvancedMetricIcon = (metricName: string) => {
+                      if (metricName.includes('visionnage')) return <Eye className="h-4 w-4 text-orange-500" />;
+                      if (metricName.includes('achèvement')) return <CheckCircle className="h-4 w-4 text-green-500" />;
+                      return <Percent className="h-4 w-4 text-blue-500" />;
+                    };
+                    
+                    return (
+                    <div key={index + 6} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getAdvancedMetricIcon(metric.metric)}
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{metric.metric}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                            style={{ width: `${metric.value}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white w-12 text-right">
+                          {metric.value}%
+                        </span>
+                      </div>
+                    </div>
+                  )})}
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Activity className="h-4 w-4 text-orange-600 dark:text-orange-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-orange-700 dark:text-orange-300">
+                      {selectedCampaign !== 'all' && campaigns.find(c => c.id === selectedCampaign) ?
+                        `Cette campagne a un taux de visionnage de ${campaigns.find(c => c.id === selectedCampaign)?.viewRate}% et un taux d'achèvement de ${campaigns.find(c => c.id === selectedCampaign)?.completionRate}%.` :
+                        `Taux de visionnage moyen: ${currentStats.averageViewRate}% | Taux d'achèvement moyen: ${currentStats.averageCompletionRate}%`
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Period Comparison */}
@@ -988,6 +1110,24 @@ export default function StatsPage() {
                   {formatCurrency((campaigns.find(c => c.id === selectedCampaign)?.spent || 0) /
                     (campaigns.find(c => c.id === selectedCampaign)?.conversions || 1))}
                 </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Taux de visionnage</span>
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {campaigns.find(c => c.id === selectedCampaign)?.viewRate}%
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Taux d'achèvement</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {campaigns.find(c => c.id === selectedCampaign)?.completionRate}%
+                  </span>
+                </div>
               </div>
             </div>
             

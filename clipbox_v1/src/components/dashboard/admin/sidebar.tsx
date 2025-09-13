@@ -186,9 +186,17 @@ export default function AdminSidebar() {
         <div className="flex flex-col h-full pt-20 lg:pt-0">
           {/* Quick Stats */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-              Statistiques rapides
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Statistiques rapides
+              </h3>
+              <Link
+                href="/dashboard/admin/analytics"
+                className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+              >
+                Voir tout →
+              </Link>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {quickStats.map((stat, index) => (
                 <div key={index} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">

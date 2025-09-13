@@ -286,10 +286,45 @@ export default function CampaignDetailPage() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <button
+              onClick={() => {
+                // Export campaign data
+                const exportData = {
+                  campaign: {
+                    ...campaign,
+                    submissions: filteredSubmissions
+                  },
+                  exportDate: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `campaign-${campaign.id}-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
               <Download className="h-5 w-5" />
             </button>
-            <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+            <button
+              onClick={() => {
+                const newBudget = prompt('Nouveau budget (€):', campaign.budget.toString());
+                if (newBudget && !isNaN(Number(newBudget)) && Number(newBudget) > campaign.budget) {
+                  const increase = Number(newBudget) - campaign.budget;
+                  setCampaign({
+                    ...campaign,
+                    budget: Number(newBudget),
+                    remainingBudget: campaign.remainingBudget + increase
+                  });
+                  alert(`Budget augmenté de €${increase} avec succès!`);
+                }
+              }}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            >
               Augmenter le budget
             </button>
           </div>

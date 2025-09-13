@@ -443,30 +443,50 @@ export default function AdminDashboardPage() {
               Voir détails →
             </button>
           </div>
-          <Line
-            data={revenueChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'bottom' as const
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function(value: any) {
-                      return '€' + value.toLocaleString();
+          <div style={{ height: '300px' }}>
+            <Line
+              data={revenueChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom' as const,
+                    labels: {
+                      color: 'rgb(156, 163, 175)'
+                    }
+                  },
+                  tooltip: {
+                    mode: 'index' as const,
+                    intersect: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                      color: 'rgb(156, 163, 175)',
+                      callback: function(value: any) {
+                        return '€' + value.toLocaleString();
+                      }
+                    }
+                  },
+                  x: {
+                    grid: {
+                      color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                      color: 'rgb(156, 163, 175)'
                     }
                   }
                 }
-              }
-            }}
-            height={300}
-          />
+              }}
+            />
+          </div>
         </div>
 
         {/* Platform Distribution */}
@@ -474,20 +494,28 @@ export default function AdminDashboardPage() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
             Répartition par plateforme
           </h2>
-          <Doughnut
-            data={platformDistributionData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'bottom' as const
-                }
-              }
-            }}
-            height={300}
-          />
+          <div style={{ height: '300px' }}>
+            <Doughnut
+              data={platformDistributionData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom' as const,
+                    labels: {
+                      color: 'rgb(156, 163, 175)'
+                    }
+                  },
+                  tooltip: {
+                    enabled: true
+                  }
+                },
+                cutout: '60%'
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -526,7 +554,21 @@ export default function AdminDashboardPage() {
                     {formatTimeAgo(action.createdAt)}
                   </p>
                 </div>
-                <button className="ml-4 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <button
+                  onClick={() => {
+                    // Redirection based on action type
+                    if (action.type === 'campaign') {
+                      window.location.href = '/dashboard/admin/campaigns?status=pending';
+                    } else if (action.type === 'withdrawal') {
+                      window.location.href = '/dashboard/admin/payments';
+                    } else if (action.type === 'moderation') {
+                      window.location.href = '/dashboard/admin/moderation?type=videos';
+                    } else if (action.type === 'kyc') {
+                      window.location.href = '/dashboard/admin/moderation?type=clippers';
+                    }
+                  }}
+                  className="ml-4 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded-lg"
+                >
                   Traiter
                 </button>
               </div>
@@ -540,7 +582,10 @@ export default function AdminDashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Alertes système
             </h2>
-            <button className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+            <button
+              onClick={() => window.location.href = '/dashboard/admin/system/alerts'}
+              className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+            >
               Tout voir →
             </button>
           </div>
@@ -578,25 +623,48 @@ export default function AdminDashboardPage() {
               Voir détails →
             </button>
           </div>
-          <Bar
-            data={userGrowthData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'bottom' as const
+          <div style={{ height: '250px' }}>
+            <Bar
+              data={userGrowthData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom' as const,
+                    labels: {
+                      color: 'rgb(156, 163, 175)'
+                    }
+                  },
+                  tooltip: {
+                    mode: 'index' as const,
+                    intersect: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    stacked: false,
+                    grid: {
+                      color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                      color: 'rgb(156, 163, 175)'
+                    }
+                  },
+                  x: {
+                    grid: {
+                      color: 'rgba(156, 163, 175, 0.1)'
+                    },
+                    ticks: {
+                      color: 'rgb(156, 163, 175)'
+                    }
+                  }
                 }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true
-                }
-              }
-            }}
-            height={250}
-          />
+              }}
+            />
+          </div>
         </div>
 
         {/* Recent Activity */}

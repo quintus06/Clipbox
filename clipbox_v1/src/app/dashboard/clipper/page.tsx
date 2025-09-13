@@ -202,7 +202,28 @@ export default function ClipperDashboard() {
             <option value="month">Ce mois</option>
             <option value="year">Cette année</option>
           </select>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+          <button
+            onClick={() => {
+              // Export functionality
+              const data = {
+                earnings: mockStats.earnings,
+                clips: mockStats.clips,
+                views: mockStats.views,
+                campaigns: mockStats.campaigns,
+                exportDate: new Date().toISOString()
+              };
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `clipper-data-${new Date().toISOString().split('T')[0]}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+          >
             Exporter les données
           </button>
         </div>
@@ -271,10 +292,10 @@ export default function ClipperDashboard() {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
             <Link
-              href="/dashboard/clipper/submissions"
+              href="/dashboard/clipper/submissions/new"
               className="inline-flex items-center justify-center px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors font-medium"
             >
-              Soumettre une vidéo
+              Soumettre un clip
             </Link>
           </div>
         </div>

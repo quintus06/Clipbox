@@ -629,9 +629,67 @@ export default function AdminModerationPage() {
                         </>
                       ) : null}
                       
-                      <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <div className="relative group">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Toggle dropdown menu
+                            const dropdown = e.currentTarget.nextElementSibling;
+                            if (dropdown) {
+                              dropdown.classList.toggle('hidden');
+                            }
+                          }}
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        <div className="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                          <button
+                            onClick={() => {
+                              console.log('Voir historique', item.id);
+                              alert(`Voir l'historique de: ${item.title}`);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            Voir l'historique
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log('Assigner à', item.id);
+                              alert(`Assigner ${item.title} à un modérateur`);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            Assigner à...
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log('Marquer comme traité', item.id);
+                              alert(`Marquer ${item.title} comme traité`);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            Marquer comme traité
+                          </button>
+                          <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                          <button
+                            onClick={() => {
+                              console.log('Exporter', item.id);
+                              const data = JSON.stringify(item, null, 2);
+                              const blob = new Blob([data], { type: 'application/json' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `moderation-${item.id}.json`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            Exporter les détails
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -718,6 +776,230 @@ export default function AdminModerationPage() {
               >
                 Confirmer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDetailModal && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Détails de la modération
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {selectedItem.type === 'campaign' ? 'Campagne' :
+                   selectedItem.type === 'clipper' ? 'Clipper' :
+                   selectedItem.type === 'video' ? 'Vidéo' :
+                   'Retrait'} - ID: {selectedItem.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <XCircle className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Status and Priority */}
+              <div className="flex items-center gap-4">
+                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedItem.status)}`}>
+                  {selectedItem.status === 'pending' ? <Clock className="h-4 w-4" /> :
+                   selectedItem.status === 'approved' ? <CheckCircle className="h-4 w-4" /> :
+                   selectedItem.status === 'rejected' ? <XCircle className="h-4 w-4" /> :
+                   <Flag className="h-4 w-4" />}
+                  <span>
+                    {selectedItem.status === 'pending' ? 'En attente' :
+                     selectedItem.status === 'approved' ? 'Approuvé' :
+                     selectedItem.status === 'rejected' ? 'Rejeté' : 'Signalé'}
+                  </span>
+                </div>
+                <div className={`px-3 py-1 text-sm font-medium rounded-full ${getPriorityColor(selectedItem.priority)}`}>
+                  Priorité {selectedItem.priority === 'urgent' ? 'urgente' :
+                          selectedItem.priority === 'high' ? 'haute' :
+                          selectedItem.priority === 'medium' ? 'moyenne' : 'basse'}
+                </div>
+              </div>
+
+              {/* Main Info */}
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  {selectedItem.title}
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {selectedItem.description}
+                </p>
+                {selectedItem.reason && (
+                  <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                          Raison du signalement
+                        </p>
+                        <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                          {selectedItem.reason}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* User Info */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                  Informations utilisateur
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Nom</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {selectedItem.user.name}
+                      </p>
+                      {selectedItem.user.verified && (
+                        <CheckCircle className="h-4 w-4 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedItem.user.email}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Membre depuis</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedItem.user.joinDate.toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Créé le</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedItem.createdAt.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              {selectedItem.metadata && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                    Détails supplémentaires
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedItem.metadata.views !== undefined && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Vues</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedItem.metadata.views.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {selectedItem.metadata.likes !== undefined && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Likes</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedItem.metadata.likes.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {selectedItem.metadata.platform && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Plateforme</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedItem.metadata.platform}
+                        </p>
+                      </div>
+                    )}
+                    {selectedItem.metadata.duration && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Durée</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedItem.metadata.duration} secondes
+                        </p>
+                      </div>
+                    )}
+                    {selectedItem.metadata.kycStatus && (
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Statut KYC</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                          {selectedItem.metadata.kycStatus === 'documents_submitted' ? 'Documents soumis' :
+                           selectedItem.metadata.kycStatus === 'verified' ? 'Vérifié' :
+                           selectedItem.metadata.kycStatus}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stats */}
+              {(selectedItem.amount || selectedItem.reports) && (
+                <div className="flex items-center gap-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  {selectedItem.amount && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Montant</p>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                          €{selectedItem.amount.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedItem.reports && (
+                    <div className="flex items-center gap-2">
+                      <Flag className="h-5 w-5 text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Signalements</p>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {selectedItem.reports}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Fermer
+                </button>
+                {(selectedItem.status === 'pending' || selectedItem.status === 'flagged') && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleAction(selectedItem, 'approve');
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      Approuver
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleAction(selectedItem, 'reject');
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      Rejeter
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

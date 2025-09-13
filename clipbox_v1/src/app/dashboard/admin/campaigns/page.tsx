@@ -459,7 +459,20 @@ export default function AdminCampaignsPage() {
               {campaigns.map((campaign) => (
                 <tr
                   key={campaign.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
+                  onClick={(e) => {
+                    // Don't navigate if clicking on checkbox or action buttons
+                    const target = e.target as HTMLElement;
+                    if (
+                      target.tagName === 'INPUT' ||
+                      target.closest('button') ||
+                      target.closest('input')
+                    ) {
+                      return;
+                    }
+                    // Navigate to campaign details
+                    window.location.href = `/dashboard/admin/campaigns/${campaign.id}`;
+                  }}
                 >
                   <td className="px-6 py-4">
                     <input
@@ -567,6 +580,10 @@ export default function AdminCampaignsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/dashboard/admin/campaigns/${campaign.id}`;
+                        }}
                         className="p-1 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
                         title="Voir détails"
                       >
