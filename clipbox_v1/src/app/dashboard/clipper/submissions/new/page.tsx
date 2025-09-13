@@ -33,7 +33,6 @@ const mockJoinedCampaigns = [
     id: '1',
     title: 'Summer Fashion Collection 2024',
     advertiser: 'Fashion Brand Co.',
-    pricePerClip: 75,
     remunerationPer1000Views: 15,
     platforms: ['TIKTOK', 'INSTAGRAM_REELS'],
     endDate: '2024-03-01',
@@ -44,7 +43,6 @@ const mockJoinedCampaigns = [
     id: '2',
     title: 'Tech Review - Smartphone Pro Max',
     advertiser: 'TechCorp',
-    pricePerClip: 100,
     remunerationPer1000Views: 20,
     platforms: ['YOUTUBE_SHORTS', 'TIKTOK'],
     endDate: '2024-02-25',
@@ -55,7 +53,6 @@ const mockJoinedCampaigns = [
     id: '4',
     title: 'Beauty Tutorial - Maquillage Naturel',
     advertiser: 'Beauty Essentials',
-    pricePerClip: 60,
     remunerationPer1000Views: 12,
     platforms: ['INSTAGRAM_REELS', 'YOUTUBE_SHORTS'],
     endDate: '2024-03-15',
@@ -337,14 +334,6 @@ export default function NewSubmissionPage() {
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {campaign.advertiser}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-gray-900 dark:text-white">
-                            €{campaign.pricePerClip}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            par clip
                           </p>
                         </div>
                       </div>
