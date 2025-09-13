@@ -22,9 +22,110 @@ import {
   Megaphone,
   Globe,
   Activity,
-  Percent
+  Percent,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+// Mock campaigns data
+const mockCampaigns = [
+  {
+    id: '1',
+    title: 'Tech Launch 2025',
+    status: 'ACTIVE',
+    budget: 2500,
+    spent: 1850,
+    remainingBudget: 650,
+    views: 450000,
+    clicks: 35000,
+    conversions: 342,
+    submissions: 45,
+    approvedSubmissions: 38,
+    rejectedSubmissions: 7,
+    engagement: 9.2,
+    roi: 4.2,
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-03-15'),
+    platform: 'TIKTOK'
+  },
+  {
+    id: '2',
+    title: 'Summer Fashion',
+    status: 'ACTIVE',
+    budget: 1800,
+    spent: 1200,
+    remainingBudget: 600,
+    views: 320000,
+    clicks: 28000,
+    conversions: 256,
+    submissions: 32,
+    approvedSubmissions: 28,
+    rejectedSubmissions: 4,
+    engagement: 8.5,
+    roi: 3.8,
+    startDate: new Date('2025-01-10'),
+    endDate: new Date('2025-03-20'),
+    platform: 'INSTAGRAM'
+  },
+  {
+    id: '3',
+    title: 'Gaming Setup',
+    status: 'ACTIVE',
+    budget: 1500,
+    spent: 980,
+    remainingBudget: 520,
+    views: 280000,
+    clicks: 22000,
+    conversions: 198,
+    submissions: 28,
+    approvedSubmissions: 25,
+    rejectedSubmissions: 3,
+    engagement: 7.8,
+    roi: 3.5,
+    startDate: new Date('2025-01-15'),
+    endDate: new Date('2025-03-25'),
+    platform: 'YOUTUBE'
+  },
+  {
+    id: '4',
+    title: 'Beauty Tutorial',
+    status: 'COMPLETED',
+    budget: 1200,
+    spent: 1100,
+    remainingBudget: 100,
+    views: 195000,
+    clicks: 18000,
+    conversions: 156,
+    submissions: 22,
+    approvedSubmissions: 20,
+    rejectedSubmissions: 2,
+    engagement: 8.9,
+    roi: 3.2,
+    startDate: new Date('2024-11-01'),
+    endDate: new Date('2024-12-31'),
+    platform: 'TIKTOK'
+  },
+  {
+    id: '5',
+    title: 'Fitness Challenge',
+    status: 'PAUSED',
+    budget: 1000,
+    spent: 450,
+    remainingBudget: 550,
+    views: 125000,
+    clicks: 10000,
+    conversions: 89,
+    submissions: 15,
+    approvedSubmissions: 12,
+    rejectedSubmissions: 3,
+    engagement: 7.2,
+    roi: 2.8,
+    startDate: new Date('2025-01-20'),
+    endDate: new Date('2025-04-01'),
+    platform: 'INSTAGRAM'
+  }
+];
 
 // Mock data for charts
 const mockChartData = {
@@ -106,12 +207,130 @@ const mockStats = {
 export default function StatsPage() {
   const [timeRange, setTimeRange] = useState('30days');
   const [selectedPlatform, setSelectedPlatform] = useState('all');
+  const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState(mockCampaigns);
+  const [currentStats, setCurrentStats] = useState(mockStats);
+  const [currentChartData, setCurrentChartData] = useState(mockChartData);
 
   useEffect(() => {
     // Simulate loading
     setTimeout(() => setLoading(false), 1000);
   }, []);
+
+  useEffect(() => {
+    // Update stats based on selected campaign
+    if (selectedCampaign === 'all') {
+      // Calculate aggregate stats for all campaigns
+      setCurrentStats(mockStats);
+      setCurrentChartData(mockChartData);
+    } else {
+      // Get stats for specific campaign
+      const campaign = campaigns.find(c => c.id === selectedCampaign);
+      if (campaign) {
+        // Generate campaign-specific stats
+        const campaignStats = {
+          totalCampaigns: 1,
+          activeCampaigns: campaign.status === 'ACTIVE' ? 1 : 0,
+          totalBudget: campaign.budget,
+          totalSpent: campaign.spent,
+          clipsGenerated: campaign.submissions,
+          averageEngagement: campaign.engagement,
+          globalROI: campaign.roi,
+          totalViews: campaign.views,
+          totalConversions: campaign.conversions,
+          conversionRate: parseFloat(((campaign.conversions / campaign.clicks) * 100).toFixed(2)),
+          costPerEngagement: parseFloat((campaign.spent / (campaign.views * campaign.engagement / 100)).toFixed(2)),
+          averageCostPerClip: campaign.submissions > 0 ? parseFloat((campaign.spent / campaign.submissions).toFixed(2)) : 0,
+        };
+
+        // Generate campaign-specific chart data
+        const campaignChartData = {
+          budgetEvolution: generateCampaignBudgetData(campaign),
+          platformPerformance: [
+            {
+              platform: campaign.platform,
+              campaigns: 1,
+              budget: campaign.budget,
+              clips: campaign.submissions,
+              engagement: campaign.engagement,
+              roi: campaign.roi
+            }
+          ],
+          topCampaigns: [{
+            name: campaign.title,
+            budget: campaign.budget,
+            spent: campaign.spent,
+            clips: campaign.submissions,
+            views: campaign.views,
+            engagement: campaign.engagement,
+            roi: campaign.roi,
+            status: campaign.status.toLowerCase()
+          }],
+          clipperDistribution: mockChartData.clipperDistribution,
+          engagementMetrics: generateCampaignEngagementMetrics(campaign),
+          monthlyComparison: generateCampaignComparison(campaign)
+        };
+
+        setCurrentStats(campaignStats);
+        setCurrentChartData(campaignChartData);
+      }
+    }
+  }, [selectedCampaign, campaigns]);
+
+  const generateCampaignBudgetData = (campaign: any) => {
+    // Generate budget evolution data for a specific campaign
+    const days = 7;
+    const data = [];
+    const dailyBudget = campaign.budget / 30;
+    const dailySpent = campaign.spent / 30;
+    
+    for (let i = 1; i <= days; i++) {
+      data.push({
+        day: (i * 5).toString(),
+        budget: Math.round(dailyBudget * i * 5),
+        spent: Math.round(dailySpent * i * 5 * (0.8 + Math.random() * 0.4)),
+        roi: campaign.roi * (0.9 + Math.random() * 0.2)
+      });
+    }
+    return data;
+  };
+
+  const generateCampaignEngagementMetrics = (campaign: any) => {
+    return [
+      { metric: 'Vues', value: 100 },
+      { metric: 'Likes', value: Math.round(campaign.engagement * 8) },
+      { metric: 'Partages', value: Math.round(campaign.engagement * 7) },
+      { metric: 'Commentaires', value: Math.round(campaign.engagement * 5) },
+      { metric: 'Clics', value: Math.round((campaign.clicks / campaign.views) * 100) },
+      { metric: 'Conversions', value: Math.round((campaign.conversions / campaign.clicks) * 100) },
+    ];
+  };
+
+  const generateCampaignComparison = (campaign: any) => {
+    return {
+      current: {
+        budget: campaign.budget,
+        spent: campaign.spent,
+        campaigns: 1,
+        clips: campaign.submissions,
+        views: campaign.views,
+        engagement: campaign.engagement,
+        roi: campaign.roi,
+        conversions: campaign.conversions
+      },
+      previous: {
+        budget: campaign.budget * 0.85,
+        spent: campaign.spent * 0.9,
+        campaigns: 1,
+        clips: Math.round(campaign.submissions * 0.8),
+        views: Math.round(campaign.views * 0.75),
+        engagement: campaign.engagement * 0.92,
+        roi: campaign.roi * 0.88,
+        conversions: Math.round(campaign.conversions * 0.82)
+      }
+    };
+  };
 
   const getTrendIcon = (value: number) => {
     if (value > 0) return <ArrowUp className="h-4 w-4" />;
@@ -147,6 +366,14 @@ export default function StatsPage() {
     return num.toString();
   };
 
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(date);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -168,6 +395,35 @@ export default function StatsPage() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          {/* Campaign Selector Dropdown */}
+          <select
+            value={selectedCampaign}
+            onChange={(e) => setSelectedCampaign(e.target.value)}
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="all">Toutes les campagnes</option>
+            <optgroup label="Campagnes actives">
+              {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.title}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Campagnes terminées">
+              {campaigns.filter(c => c.status === 'COMPLETED').map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.title}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Campagnes en pause">
+              {campaigns.filter(c => c.status === 'PAUSED').map(campaign => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.title}
+                </option>
+              ))}
+            </optgroup>
+          </select>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
@@ -195,6 +451,42 @@ export default function StatsPage() {
         </div>
       </div>
 
+      {/* Campaign-specific info banner when a campaign is selected */}
+      {selectedCampaign !== 'all' && (
+        <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {campaigns.find(c => c.id === selectedCampaign)?.title}
+              </h2>
+              <div className="flex items-center gap-4 mt-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                  ${campaigns.find(c => c.id === selectedCampaign)?.status === 'ACTIVE' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
+                  ${campaigns.find(c => c.id === selectedCampaign)?.status === 'PAUSED' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+                  ${campaigns.find(c => c.id === selectedCampaign)?.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' : ''}
+                `}>
+                  {campaigns.find(c => c.id === selectedCampaign)?.status === 'ACTIVE' && 'Active'}
+                  {campaigns.find(c => c.id === selectedCampaign)?.status === 'PAUSED' && 'En pause'}
+                  {campaigns.find(c => c.id === selectedCampaign)?.status === 'COMPLETED' && 'Terminée'}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Plateforme: {campaigns.find(c => c.id === selectedCampaign)?.platform}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {formatDate(campaigns.find(c => c.id === selectedCampaign)?.startDate || new Date())} - {formatDate(campaigns.find(c => c.id === selectedCampaign)?.endDate || new Date())}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedCampaign('all')}
+              className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
+            >
+              Voir toutes les campagnes
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Key Performance Metrics - Responsive grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -204,13 +496,17 @@ export default function StatsPage() {
             </div>
             <span className={`flex items-center gap-1 text-sm font-medium ${getTrendColor(14.3)}`}>
               {getTrendIcon(14.3)}
-              14.3%
+              {selectedCampaign === 'all' ? '14.3%' : ''}
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Campagnes totales</p>
-          <p className="text-2xl font-bold mt-1">{mockStats.totalCampaigns}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedCampaign === 'all' ? 'Campagnes totales' : 'Campagne'}
+          </p>
+          <p className="text-2xl font-bold mt-1">{currentStats.totalCampaigns}</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-            {mockStats.activeCampaigns} actives
+            {selectedCampaign === 'all' ? `${currentStats.activeCampaigns} actives` :
+             campaigns.find(c => c.id === selectedCampaign)?.status === 'ACTIVE' ? 'Active' :
+             campaigns.find(c => c.id === selectedCampaign)?.status === 'PAUSED' ? 'En pause' : 'Terminée'}
           </p>
         </div>
 
@@ -224,10 +520,12 @@ export default function StatsPage() {
               <span className="hidden lg:inline">8.5%</span>
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Budget</p>
-          <p className="text-base sm:text-lg lg:text-2xl font-bold mt-1 truncate">{formatCurrency(mockStats.totalSpent)}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+            {selectedCampaign === 'all' ? 'Budget total' : 'Budget dépensé'}
+          </p>
+          <p className="text-base sm:text-lg lg:text-2xl font-bold mt-1 truncate">{formatCurrency(currentStats.totalSpent)}</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 sm:mt-2 truncate">
-            / {formatCurrency(mockStats.totalBudget)}
+            / {formatCurrency(currentStats.totalBudget)}
           </p>
         </div>
 
@@ -241,10 +539,14 @@ export default function StatsPage() {
               23.4%
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Clips générés</p>
-          <p className="text-2xl font-bold mt-1">{mockStats.clipsGenerated}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedCampaign === 'all' ? 'Clips générés' : 'Soumissions'}
+          </p>
+          <p className="text-2xl font-bold mt-1">{currentStats.clipsGenerated}</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-            {formatCurrency(mockStats.averageCostPerClip)}/clip
+            {selectedCampaign !== 'all' && campaigns.find(c => c.id === selectedCampaign) ?
+              `${campaigns.find(c => c.id === selectedCampaign)?.approvedSubmissions} approuvées` :
+              `${formatCurrency(currentStats.averageCostPerClip)}/clip`}
           </p>
         </div>
 
@@ -259,9 +561,11 @@ export default function StatsPage() {
             </span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">Taux d'engagement</p>
-          <p className="text-2xl font-bold mt-1">{mockStats.averageEngagement}%</p>
+          <p className="text-2xl font-bold mt-1">{currentStats.averageEngagement}%</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-            {formatCurrency(mockStats.costPerEngagement)}/eng.
+            {selectedCampaign !== 'all' && campaigns.find(c => c.id === selectedCampaign) ?
+              `${formatNumber(campaigns.find(c => c.id === selectedCampaign)?.clicks || 0)} clics` :
+              `${formatCurrency(currentStats.costPerEngagement)}/eng.`}
           </p>
         </div>
 
@@ -275,10 +579,12 @@ export default function StatsPage() {
               18.5%
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">ROI Global</p>
-          <p className="text-2xl font-bold mt-1">{mockStats.globalROI}x</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedCampaign === 'all' ? 'ROI Global' : 'ROI'}
+          </p>
+          <p className="text-2xl font-bold mt-1">{currentStats.globalROI}x</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-            {mockStats.conversionRate}% conv.
+            {currentStats.conversionRate}% conv.
           </p>
         </div>
       </div>
@@ -303,7 +609,7 @@ export default function StatsPage() {
           <div className="w-full overflow-x-auto">
             <div className="min-w-[350px]">
               <ResponsiveContainer width="100%" height={200} minWidth={350}>
-            <AreaChart data={mockChartData.budgetEvolution}>
+            <AreaChart data={currentChartData.budgetEvolution}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="day" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />
@@ -344,7 +650,7 @@ export default function StatsPage() {
           <div className="w-full overflow-x-auto">
             <div className="min-w-[350px]">
               <ResponsiveContainer width="100%" height={200} minWidth={350}>
-            <BarChart data={mockChartData.platformPerformance}>
+            <BarChart data={currentChartData.platformPerformance}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="platform" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />
@@ -383,10 +689,14 @@ export default function StatsPage() {
       {/* Top Campaigns Table - Mobile scrollable */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Top 5 des campagnes</h2>
-          <button className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 hover:underline">
-            Voir toutes →
-          </button>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+            {selectedCampaign === 'all' ? 'Top 5 des campagnes' : 'Détails de la campagne'}
+          </h2>
+          {selectedCampaign === 'all' && (
+            <button className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 hover:underline">
+              Voir toutes →
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
           <table className="w-full min-w-[600px]">
@@ -403,7 +713,7 @@ export default function StatsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockChartData.topCampaigns.map((campaign, index) => (
+              {currentChartData.topCampaigns.map((campaign, index) => (
                 <tr key={index} className="border-b border-gray-100 dark:border-gray-700/50">
                   <td className="py-3">
                     <p className="font-medium text-sm text-gray-900 dark:text-white">{campaign.name}</p>
@@ -451,7 +761,7 @@ export default function StatsPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Distribution des clippers</h2>
           <div className="space-y-4">
-            {mockChartData.clipperDistribution.map((country, index) => (
+            {currentChartData.clipperDistribution.map((country, index) => (
               <div key={index}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -484,7 +794,7 @@ export default function StatsPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Métriques d'engagement</h2>
           <div className="space-y-3">
-            {mockChartData.engagementMetrics.map((metric, index) => (
+            {currentChartData.engagementMetrics.map((metric, index) => (
               <div key={index} className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">{metric.metric}</span>
                 <div className="flex items-center gap-2">
@@ -511,10 +821,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Budget</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formatCurrency(mockChartData.monthlyComparison.current.budget)}
+                  {formatCurrency(currentChartData.monthlyComparison.current.budget)}
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.budget, mockChartData.monthlyComparison.previous.budget)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.budget, mockChartData.monthlyComparison.previous.budget)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.budget, currentChartData.monthlyComparison.previous.budget)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.budget, currentChartData.monthlyComparison.previous.budget)}%
                 </span>
               </div>
             </div>
@@ -522,10 +832,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Clips générés</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {mockChartData.monthlyComparison.current.clips}
+                  {currentChartData.monthlyComparison.current.clips}
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.clips, mockChartData.monthlyComparison.previous.clips)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.clips, mockChartData.monthlyComparison.previous.clips)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.clips, currentChartData.monthlyComparison.previous.clips)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.clips, currentChartData.monthlyComparison.previous.clips)}%
                 </span>
               </div>
             </div>
@@ -533,10 +843,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Vues totales</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formatNumber(mockChartData.monthlyComparison.current.views)}
+                  {formatNumber(currentChartData.monthlyComparison.current.views)}
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.views, mockChartData.monthlyComparison.previous.views)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.views, mockChartData.monthlyComparison.previous.views)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.views, currentChartData.monthlyComparison.previous.views)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.views, currentChartData.monthlyComparison.previous.views)}%
                 </span>
               </div>
             </div>
@@ -544,10 +854,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Engagement</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {mockChartData.monthlyComparison.current.engagement}%
+                  {currentChartData.monthlyComparison.current.engagement}%
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.engagement, mockChartData.monthlyComparison.previous.engagement)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.engagement, mockChartData.monthlyComparison.previous.engagement)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.engagement, currentChartData.monthlyComparison.previous.engagement)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.engagement, currentChartData.monthlyComparison.previous.engagement)}%
                 </span>
               </div>
             </div>
@@ -555,10 +865,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">ROI</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {mockChartData.monthlyComparison.current.roi}x
+                  {currentChartData.monthlyComparison.current.roi}x
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.roi, mockChartData.monthlyComparison.previous.roi)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.roi, mockChartData.monthlyComparison.previous.roi)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.roi, currentChartData.monthlyComparison.previous.roi)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.roi, currentChartData.monthlyComparison.previous.roi)}%
                 </span>
               </div>
             </div>
@@ -566,10 +876,10 @@ export default function StatsPage() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Conversions</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {mockChartData.monthlyComparison.current.conversions}
+                  {currentChartData.monthlyComparison.current.conversions}
                 </span>
-                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(mockChartData.monthlyComparison.current.conversions, mockChartData.monthlyComparison.previous.conversions)))}`}>
-                  +{calculatePercentageChange(mockChartData.monthlyComparison.current.conversions, mockChartData.monthlyComparison.previous.conversions)}%
+                <span className={`text-xs font-medium ${getTrendColor(Number(calculatePercentageChange(currentChartData.monthlyComparison.current.conversions, currentChartData.monthlyComparison.previous.conversions)))}`}>
+                  +{calculatePercentageChange(currentChartData.monthlyComparison.current.conversions, currentChartData.monthlyComparison.previous.conversions)}%
                 </span>
               </div>
             </div>
@@ -581,27 +891,130 @@ export default function StatsPage() {
       <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-xl p-6 text-white">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div>
-            <p className="text-white/80 text-sm">Coût moyen par clip</p>
-            <p className="text-2xl font-bold mt-1">{formatCurrency(mockStats.averageCostPerClip)}</p>
-            <p className="text-xs text-white/60 mt-1">-12% vs mois dernier</p>
+            <p className="text-white/80 text-sm">
+              {selectedCampaign === 'all' ? 'Coût moyen par clip' : 'Budget restant'}
+            </p>
+            <p className="text-2xl font-bold mt-1">
+              {selectedCampaign === 'all' ?
+                formatCurrency(currentStats.averageCostPerClip) :
+                formatCurrency(campaigns.find(c => c.id === selectedCampaign)?.remainingBudget || 0)}
+            </p>
+            <p className="text-xs text-white/60 mt-1">
+              {selectedCampaign === 'all' ? '-12% vs mois dernier' :
+               `${Math.round(((campaigns.find(c => c.id === selectedCampaign)?.remainingBudget || 0) / (campaigns.find(c => c.id === selectedCampaign)?.budget || 1)) * 100)}% du budget`}
+            </p>
           </div>
           <div>
-            <p className="text-white/80 text-sm">Meilleure plateforme</p>
-            <p className="text-2xl font-bold mt-1">TikTok</p>
-            <p className="text-xs text-white/60 mt-1">ROI de 3.8x</p>
+            <p className="text-white/80 text-sm">
+              {selectedCampaign === 'all' ? 'Meilleure plateforme' : 'Plateforme'}
+            </p>
+            <p className="text-2xl font-bold mt-1">
+              {selectedCampaign === 'all' ? 'TikTok' : campaigns.find(c => c.id === selectedCampaign)?.platform}
+            </p>
+            <p className="text-xs text-white/60 mt-1">
+              ROI de {currentStats.globalROI}x
+            </p>
           </div>
           <div>
             <p className="text-white/80 text-sm">Taux de conversion</p>
-            <p className="text-2xl font-bold mt-1">{mockStats.conversionRate}%</p>
-            <p className="text-xs text-white/60 mt-1">+0.5% ce mois</p>
+            <p className="text-2xl font-bold mt-1">{currentStats.conversionRate}%</p>
+            <p className="text-xs text-white/60 mt-1">
+              {selectedCampaign === 'all' ? '+0.5% ce mois' : `${currentStats.totalConversions} conversions`}
+            </p>
           </div>
           <div>
             <p className="text-white/80 text-sm">Vues totales</p>
-            <p className="text-2xl font-bold mt-1">{formatNumber(mockStats.totalViews)}</p>
-            <p className="text-xs text-white/60 mt-1">+23% de croissance</p>
+            <p className="text-2xl font-bold mt-1">{formatNumber(currentStats.totalViews)}</p>
+            <p className="text-xs text-white/60 mt-1">
+              {selectedCampaign === 'all' ? '+23% de croissance' :
+               `${formatNumber(campaigns.find(c => c.id === selectedCampaign)?.clicks || 0)} clics`}
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Campaign-specific additional stats when a campaign is selected */}
+      {selectedCampaign !== 'all' && campaigns.find(c => c.id === selectedCampaign) && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Statistiques détaillées de la campagne
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Soumissions approuvées</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {campaigns.find(c => c.id === selectedCampaign)?.approvedSubmissions}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Soumissions rejetées</span>
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {campaigns.find(c => c.id === selectedCampaign)?.rejectedSubmissions}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Total soumissions</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {campaigns.find(c => c.id === selectedCampaign)?.submissions}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Vues par soumission</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatNumber(Math.round((campaigns.find(c => c.id === selectedCampaign)?.views || 0) /
+                    (campaigns.find(c => c.id === selectedCampaign)?.submissions || 1)))}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Clics par soumission</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatNumber(Math.round((campaigns.find(c => c.id === selectedCampaign)?.clicks || 0) /
+                    (campaigns.find(c => c.id === selectedCampaign)?.submissions || 1)))}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Coût par conversion</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatCurrency((campaigns.find(c => c.id === selectedCampaign)?.spent || 0) /
+                    (campaigns.find(c => c.id === selectedCampaign)?.conversions || 1))}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Date de début</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatDate(campaigns.find(c => c.id === selectedCampaign)?.startDate || new Date())}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Date de fin</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatDate(campaigns.find(c => c.id === selectedCampaign)?.endDate || new Date())}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Jours restants</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {Math.max(0, Math.ceil(((campaigns.find(c => c.id === selectedCampaign)?.endDate?.getTime() || 0) -
+                    new Date().getTime()) / (1000 * 60 * 60 * 24)))} jours
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tips Section */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">

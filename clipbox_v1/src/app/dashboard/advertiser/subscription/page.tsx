@@ -59,16 +59,14 @@ export default function AdvertiserSubscriptionPage() {
     {
       id: 'starter',
       name: 'Starter',
-      price: { monthly: 99, yearly: 990 },
+      price: { monthly: 59, yearly: 590 },
       description: 'Pour tester ClipBox',
       color: 'gray',
       features: [
-        { name: 'Jusqu\'à 5 campagnes actives', included: true },
-        { name: 'Budget max €1,000/mois', included: true },
-        { name: 'Jusqu\'à 50 clippers', included: true },
-        { name: 'Analytics de base', included: true },
-        { name: 'Support par email', included: true },
-        { name: 'Rapports mensuels', included: true },
+        { name: '5 campagnes max', included: true },
+        { name: 'Support prioritaire', included: true },
+        { name: 'Budget max 10K par mois', included: true },
+        { name: 'Retour analytics performances clippers toutes les 24h', included: true },
         { name: 'Ciblage géographique', included: false },
         { name: 'A/B testing', included: false },
         { name: 'API access', included: false },
@@ -78,24 +76,21 @@ export default function AdvertiserSubscriptionPage() {
       ],
       limits: {
         campaigns: 5,
-        budget: 1000,
-        clippers: 50
+        budget: '10K'
       }
     },
     {
       id: 'growth',
       name: 'Growth',
-      price: { monthly: 199, yearly: 1990 },
+      price: { monthly: 110, yearly: 1100 },
       description: 'Pour les entreprises en croissance',
       color: 'blue',
       badge: null,
       features: [
-        { name: 'Jusqu\'à 20 campagnes actives', included: true },
-        { name: 'Budget max €5,000/mois', included: true },
-        { name: 'Jusqu\'à 200 clippers', included: true },
-        { name: 'Analytics avancés', included: true },
+        { name: '10 campagnes max', included: true },
         { name: 'Support prioritaire', included: true },
-        { name: 'Rapports hebdomadaires', included: true },
+        { name: 'Budget max 30K par mois', included: true },
+        { name: 'Retour analytics performances clippers en temps réel', included: true },
         { name: 'Ciblage géographique', included: true },
         { name: 'A/B testing basique', included: true },
         { name: 'API access limité', included: false },
@@ -104,63 +99,33 @@ export default function AdvertiserSubscriptionPage() {
         { name: 'Formation personnalisée', included: false }
       ],
       limits: {
-        campaigns: 20,
-        budget: 5000,
-        clippers: 200
+        campaigns: 10,
+        budget: '30K'
       }
     },
     {
       id: 'business',
       name: 'Business',
-      price: { monthly: 299, yearly: 2990 },
+      price: { monthly: 199, yearly: 1990 },
       description: 'Pour les marques établies',
       color: 'purple',
       badge: 'Populaire',
       features: [
-        { name: 'Jusqu\'à 50 campagnes actives', included: true },
-        { name: 'Budget max €10,000/mois', included: true },
-        { name: 'Jusqu\'à 500 clippers', included: true },
-        { name: 'Analytics complets avec IA', included: true },
+        { name: 'Campagnes illimitées', included: true },
+        { name: 'Réduction des frais de services (création de campagnes) à 10%', included: true },
         { name: 'Support dédié 24/7', included: true },
-        { name: 'Rapports en temps réel', included: true },
+        { name: 'Budget illimité', included: true },
+        { name: 'Retour analytics performances clippers en temps réel', included: true },
         { name: 'Ciblage avancé multi-critères', included: true },
         { name: 'A/B testing avancé', included: true },
         { name: 'API access complet', included: true },
         { name: 'Account manager dédié', included: true },
-        { name: 'Campagnes prioritaires', included: false },
-        { name: 'Formation personnalisée', included: false }
-      ],
-      limits: {
-        campaigns: 50,
-        budget: 10000,
-        clippers: 500
-      }
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: { monthly: 999, yearly: 9990 },
-      description: 'Solutions sur mesure',
-      color: 'yellow',
-      badge: 'Premium',
-      features: [
-        { name: 'Campagnes illimitées', included: true },
-        { name: 'Budget illimité', included: true },
-        { name: 'Clippers illimités', included: true },
-        { name: 'Analytics prédictifs avec IA', included: true },
-        { name: 'Support VIP 24/7', included: true },
-        { name: 'Rapports personnalisés', included: true },
-        { name: 'Ciblage IA personnalisé', included: true },
-        { name: 'Tests multivariés illimités', included: true },
-        { name: 'API dédiée haute performance', included: true },
-        { name: 'Équipe dédiée', included: true },
-        { name: 'Accès prioritaire exclusif', included: true },
-        { name: 'Formation et onboarding premium', included: true }
+        { name: 'Campagnes prioritaires', included: true },
+        { name: 'Formation personnalisée', included: true }
       ],
       limits: {
         campaigns: 'Illimité',
-        budget: 'Illimité',
-        clippers: 'Illimité'
+        budget: 'Illimité'
       }
     }
   ];
@@ -169,17 +134,17 @@ export default function AdvertiserSubscriptionPage() {
     {
       icon: Rocket,
       title: 'Lancez plus de campagnes',
-      description: 'Augmentez votre portée avec plus de campagnes simultanées'
+      description: 'Augmentez votre visibilité en lançant plusieurs campagnes simultanées et en déléguant la création de contenu promotionnels'
     },
     {
       icon: Target,
       title: 'Ciblage précis',
-      description: 'Trouvez les créateurs parfaits pour votre marque'
+      description: 'Trouvez les créateurs parfaits pour votre cible'
     },
     {
       icon: BarChart3,
-      title: 'Analytics avancés',
-      description: 'Optimisez vos campagnes avec des insights détaillés'
+      title: 'Analytics',
+      description: 'Optimisez vos campagnes avec des insights détaillés en possédant un visuel complet sur les performances des clippers'
     },
     {
       icon: Shield,
@@ -236,7 +201,7 @@ export default function AdvertiserSubscriptionPage() {
                   onClick={() => setShowManageModal(true)}
                   className="px-3 sm:px-4 py-2 bg-white/20 backdrop-blur rounded-lg hover:bg-white/30 transition-colors text-sm sm:text-base"
                 >
-                  Gérer la facturation
+                  Gérer la facturation *
                 </button>
                 <button
                   onClick={() => setShowInvoiceModal(true)}
@@ -322,8 +287,15 @@ export default function AdvertiserSubscriptionPage() {
         </div>
       </div>
 
+      {/* Note about billing */}
+      <div className="text-center mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          * Les abonnements sont prélevés d'avance pour le mois suivant
+        </p>
+      </div>
+
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 overflow-x-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-12 overflow-x-hidden">
         {plans.map((plan) => {
           const price = billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly / 12;
           const isCurrentPlan = plan.name === currentPlan.name;
@@ -381,12 +353,8 @@ export default function AdvertiserSubscriptionPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Budget</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {typeof plan.limits.budget === 'number' ? `€${plan.limits.budget}` : plan.limits.budget}
+                      {typeof plan.limits.budget === 'number' ? `€${plan.limits.budget}` : `€${plan.limits.budget}`}
                     </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Clippers</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{plan.limits.clippers}</span>
                   </div>
                 </div>
 

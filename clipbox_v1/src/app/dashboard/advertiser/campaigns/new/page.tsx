@@ -28,7 +28,6 @@ interface CampaignFormData {
   duration: number; // in months
   targetCountries: string[];
   targetLanguages: string[];
-  minFollowers: number;
   maxClippers: number;
 }
 
@@ -44,12 +43,11 @@ export default function NewCampaignPage() {
     requirements: '',
     videoUrl: '',
     platform: 'TIKTOK',
-    budget: 100,
-    paymentRatio: 70,
+    budget: 400,
+    paymentRatio: 0.10,
     duration: 2,
     targetCountries: [],
     targetLanguages: [],
-    minFollowers: 1000,
     maxClippers: 50
   });
 
@@ -102,19 +100,16 @@ export default function NewCampaignPage() {
         if (formData.targetLanguages.length === 0) {
           newErrors.targetLanguages = 'Sélectionnez au moins une langue';
         }
-        if (formData.minFollowers < 100) {
-          newErrors.minFollowers = 'Le minimum de followers doit être au moins 100';
-        }
         break;
       case 3:
-        if (formData.budget < 100) {
-          newErrors.budget = 'Le budget minimum est de 100€';
+        if (formData.budget < 400) {
+          newErrors.budget = 'Le budget minimum est de 400€';
         }
         if (formData.duration < 2) {
           newErrors.duration = 'La durée minimum est de 2 mois';
         }
-        if (formData.paymentRatio < 50 || formData.paymentRatio > 100) {
-          newErrors.paymentRatio = 'Le ratio doit être entre 50% et 100%';
+        if (formData.paymentRatio < 0.10 || formData.paymentRatio > 100) {
+          newErrors.paymentRatio = 'Le montant doit être entre 0.10€ et 100€ par 1000 vues';
         }
         break;
     }
@@ -157,10 +152,8 @@ export default function NewCampaignPage() {
   };
 
   const calculateCostPerClip = () => {
-    const totalBudget = formData.budget;
-    const estimatedClips = formData.maxClippers;
-    const paymentRatio = formData.paymentRatio / 100;
-    return (totalBudget * paymentRatio) / estimatedClips;
+    // Now paymentRatio represents €/1000 views directly
+    return formData.paymentRatio;
   };
 
   const formatCurrency = (amount: number) => {
@@ -431,37 +424,17 @@ export default function NewCampaignPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                  Followers minimum *
-                </label>
-                <input
-                  type="number"
-                  value={formData.minFollowers}
-                  onChange={(e) => setFormData({ ...formData, minFollowers: parseInt(e.target.value) || 0 })}
-                  className={`w-full px-3 sm:px-4 py-2 text-sm sm:text-base border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                    errors.minFollowers ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                  min="100"
-                />
-                {errors.minFollowers && (
-                  <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.minFollowers}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                  Nombre max de clippers
-                </label>
-                <input
-                  type="number"
-                  value={formData.maxClippers}
-                  onChange={(e) => setFormData({ ...formData, maxClippers: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  min="1"
-                />
-              </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                Nombre max de clippers
+              </label>
+              <input
+                type="number"
+                value={formData.maxClippers}
+                onChange={(e) => setFormData({ ...formData, maxClippers: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                min="1"
+              />
             </div>
           </div>
         )}
@@ -484,40 +457,40 @@ export default function NewCampaignPage() {
                 className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                   errors.budget ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
-                min="100"
+                min="400"
                 step="50"
               />
               {errors.budget && (
                 <p className="mt-1 text-sm text-red-500">{errors.budget}</p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Budget minimum : 100€
+                Budget minimum : 400€
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Ratio de paiement (%) *
+                Ratio de paiement (€/1000 vues) *
               </label>
               <div className="flex items-center space-x-4">
                 <input
                   type="range"
                   value={formData.paymentRatio}
-                  onChange={(e) => setFormData({ ...formData, paymentRatio: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, paymentRatio: parseFloat(e.target.value) })}
                   className="flex-1"
-                  min="50"
+                  min="0.10"
                   max="100"
-                  step="5"
+                  step="0.05"
                 />
-                <span className="text-lg font-semibold text-gray-900 dark:text-white w-16 text-right">
-                  {formData.paymentRatio}%
+                <span className="text-lg font-semibold text-gray-900 dark:text-white w-24 text-right">
+                  {formatCurrency(formData.paymentRatio)}
                 </span>
               </div>
               {errors.paymentRatio && (
                 <p className="mt-1 text-sm text-red-500">{errors.paymentRatio}</p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Pourcentage du budget alloué aux paiements des clippers
+                Montant payé aux clippers pour 1000 vues (85% du budget après frais)
               </p>
             </div>
 
@@ -555,24 +528,24 @@ export default function NewCampaignPage() {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Budget clippers ({formData.paymentRatio}%)</span>
+                  <span className="text-gray-600 dark:text-gray-400">Budget clippers (85%)</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(formData.budget * formData.paymentRatio / 100)}
+                    {formatCurrency(formData.budget * 0.85)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Frais plateforme</span>
+                  <span className="text-gray-600 dark:text-gray-400">Frais plateforme (15%)</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(formData.budget * (100 - formData.paymentRatio) / 100)}
+                    {formatCurrency(formData.budget * 0.15)}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-orange-900 dark:text-orange-300">
-                      Coût estimé par clip
+                      Coût estimé par 1000 vues
                     </span>
                     <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                      {formatCurrency(calculateCostPerClip())}
+                      {formatCurrency(formData.paymentRatio)}
                     </span>
                   </div>
                 </div>
@@ -611,9 +584,6 @@ export default function NewCampaignPage() {
                   Langues : {formData.targetLanguages.join(', ')}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Followers min : {formData.minFollowers.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Max clippers : {formData.maxClippers}
                 </p>
               </div>
@@ -629,7 +599,7 @@ export default function NewCampaignPage() {
                   Durée : <span className="font-medium">{formData.duration} mois</span>
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Coût par clip : <span className="font-medium">{formatCurrency(calculateCostPerClip())}</span>
+                  Coût par 1000 vues : <span className="font-medium">{formatCurrency(formData.paymentRatio)}</span>
                 </p>
               </div>
             </div>
