@@ -1,18 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Bell, 
-  Link2, 
-  CreditCard, 
-  Shield, 
-  Globe, 
-  Lock, 
-  Eye, 
+import { useRouter } from 'next/navigation';
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Bell,
+  Link2,
+  CreditCard,
+  Shield,
+  Globe,
+  Lock,
+  Eye,
   EyeOff,
   Trash2,
   Save,
@@ -27,16 +28,58 @@ import {
   Building,
   Wallet,
   ChevronRight,
-  Camera
+  Camera,
+  Plus,
+  Clock,
+  Crown,
+  Sparkles,
+  Info,
+  Twitter,
+  Star
 } from 'lucide-react';
 
+// Type definitions for social accounts
+interface SocialAccount {
+  id: string;
+  username: string;
+  handle: string;
+  connected: boolean;
+  lastSync: string;
+  followers?: number;
+  status: 'active' | 'inactive' | 'error';
+}
+
+interface SocialNetwork {
+  id: string;
+  name: string;
+  icon: any;
+  color: string;
+  accounts: SocialAccount[];
+  maxAccounts: number;
+}
+
+// Subscription plan limits
+const SUBSCRIPTION_LIMITS = {
+  free: { maxAccountsPerNetwork: 1, planName: 'Gratuit', color: 'gray' },
+  starter: { maxAccountsPerNetwork: 2, planName: 'Starter', color: 'blue' },
+  pro: { maxAccountsPerNetwork: 4, planName: 'Pro', color: 'purple' },
+  goat: { maxAccountsPerNetwork: Infinity, planName: 'Goat', color: 'yellow' }
+};
+
 export default function ClipperSettingsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('personal');
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [showConnectModal, setShowConnectModal] = useState<string | null>(null);
+  const [connectingAccount, setConnectingAccount] = useState(false);
+  
+  // Current user's subscription plan (this would come from API/context)
+  const [currentSubscription, setCurrentSubscription] = useState<'free' | 'starter' | 'pro' | 'goat'>('pro');
+  const subscriptionInfo = SUBSCRIPTION_LIMITS[currentSubscription];
 
   // Form states
   const [personalInfo, setPersonalInfo] = useState({
@@ -59,11 +102,80 @@ export default function ClipperSettingsPage() {
     smsNews: false
   });
 
-  const [socialAccounts, setSocialAccounts] = useState({
-    tiktok: '@jeandupont',
-    instagram: '@jean.dupont',
-    youtube: 'JeanDupont'
-  });
+  // Enhanced social accounts state with multi-account support
+  const [socialNetworks, setSocialNetworks] = useState<SocialNetwork[]>([
+    {
+      id: 'tiktok',
+      name: 'TikTok',
+      icon: 'TT',
+      color: 'black',
+      accounts: [
+        {
+          id: 'tiktok-1',
+          username: 'jeandupont',
+          handle: '@jeandupont',
+          connected: true,
+          lastSync: '2024-03-15 14:30',
+          followers: 15420,
+          status: 'active'
+        },
+        {
+          id: 'tiktok-2',
+          username: 'jean_clips',
+          handle: '@jean_clips',
+          connected: true,
+          lastSync: '2024-03-15 12:15',
+          followers: 8200,
+          status: 'active'
+        }
+      ],
+      maxAccounts: subscriptionInfo.maxAccountsPerNetwork
+    },
+    {
+      id: 'instagram',
+      name: 'Instagram',
+      icon: Instagram,
+      color: 'gradient',
+      accounts: [
+        {
+          id: 'instagram-1',
+          username: 'jean.dupont',
+          handle: '@jean.dupont',
+          connected: true,
+          lastSync: '2024-03-15 13:45',
+          followers: 23500,
+          status: 'active'
+        }
+      ],
+      maxAccounts: subscriptionInfo.maxAccountsPerNetwork
+    },
+    {
+      id: 'youtube',
+      name: 'YouTube',
+      icon: Youtube,
+      color: 'red',
+      accounts: [
+        {
+          id: 'youtube-1',
+          username: 'JeanDupont',
+          handle: 'JeanDupont',
+          connected: true,
+          lastSync: '2024-03-15 10:00',
+          followers: 45000,
+          status: 'active'
+        }
+      ],
+      maxAccounts: subscriptionInfo.maxAccountsPerNetwork
+    },
+    {
+      id: 'twitter',
+      name: 'Twitter',
+      icon: Twitter,
+      color: 'blue',
+      accounts: [],
+      maxAccounts: subscriptionInfo.maxAccountsPerNetwork
+    }
+  ]);
 
   const [paymentMethods, setPaymentMethods] = useState({
     iban: 'FR76 1234 5678 9012 3456 7890 123',
@@ -351,90 +463,216 @@ export default function ClipperSettingsPage() {
               </div>
             )}
 
-            {/* Social Accounts Tab */}
+            {/* Enhanced Social Accounts Tab with Multi-Account Support */}
             {activeTab === 'social' && (
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                  Comptes réseaux sociaux
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Comptes réseaux sociaux
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Gérez vos comptes sur différentes plateformes
+                    </p>
+                  </div>
+                  
+                  {/* Subscription Badge */}
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                    currentSubscription === 'goat' ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white' :
+                    currentSubscription === 'pro' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
+                    currentSubscription === 'starter' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                    'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {currentSubscription === 'goat' ? <Crown className="w-4 h-4" /> :
+                     currentSubscription === 'pro' ? <Sparkles className="w-4 h-4" /> :
+                     <Star className="w-4 h-4" />}
+                    <span className="text-sm font-medium">Plan {subscriptionInfo.planName}</span>
+                  </div>
+                </div>
+
+                {/* Subscription Info Banner */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                        Limites de votre plan {subscriptionInfo.planName}
+                      </p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {subscriptionInfo.maxAccountsPerNetwork === Infinity
+                          ? 'Comptes illimités par réseau social'
+                          : `Maximum ${subscriptionInfo.maxAccountsPerNetwork} compte${subscriptionInfo.maxAccountsPerNetwork > 1 ? 's' : ''} par réseau social`}
+                      </p>
+                      {currentSubscription !== 'goat' && (
+                        <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1 flex items-center gap-1">
+                          Augmenter mes limites
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 
                 <div className="space-y-6">
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">TT</span>
+                  {socialNetworks.map((network) => {
+                    const canAddMore = network.accounts.length < network.maxAccounts;
+                    const IconComponent = network.icon === 'TT' ? null : network.icon;
+                    
+                    return (
+                      <div key={network.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                        {/* Network Header */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {/* Network Icon */}
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                network.color === 'gradient'
+                                  ? 'bg-gradient-to-br from-purple-600 to-pink-600'
+                                  : network.color === 'black'
+                                  ? 'bg-black'
+                                  : network.color === 'red'
+                                  ? 'bg-red-600'
+                                  : 'bg-blue-500'
+                              }`}>
+                                {network.icon === 'TT' ? (
+                                  <span className="text-white font-bold text-sm">TT</span>
+                                ) : (
+                                  <IconComponent className="w-6 h-6 text-white" />
+                                )}
+                              </div>
+                              
+                              <div>
+                                <h3 className="font-medium text-gray-900 dark:text-white">
+                                  {network.name}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {network.accounts.length} / {network.maxAccounts === Infinity ? '∞' : network.maxAccounts} compte{network.accounts.length !== 1 ? 's' : ''} connecté{network.accounts.length !== 1 ? 's' : ''}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Add Account Button */}
+                            <button
+                              onClick={() => canAddMore && setShowConnectModal(network.id)}
+                              disabled={!canAddMore}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                canAddMore
+                                  ? 'bg-purple-600 text-white hover:bg-purple-700'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                              }`}
+                            >
+                              <Plus className="w-4 h-4" />
+                              <span className="text-sm font-medium">Ajouter un compte</span>
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">TikTok</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Connecté</p>
+                        
+                        {/* Connected Accounts List */}
+                        <div className="p-6">
+                          {network.accounts.length > 0 ? (
+                            <div className="space-y-3">
+                              {network.accounts.map((account) => (
+                                <div key={account.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
+                                  <div className="flex items-center gap-4">
+                                    {/* Account Status Indicator */}
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      account.status === 'active' ? 'bg-green-500' :
+                                      account.status === 'error' ? 'bg-red-500' :
+                                      'bg-gray-400'
+                                    }`} />
+                                    
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                          {account.handle}
+                                        </span>
+                                        {account.status === 'active' && (
+                                          <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full">
+                                            Actif
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-4 mt-1">
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                          {account.followers?.toLocaleString()} abonnés
+                                        </span>
+                                        <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          Dernière synchro: {account.lastSync}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2">
+                                    <button className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                      Resynchroniser
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        // Handle disconnect
+                                        const updatedNetworks = socialNetworks.map(n => {
+                                          if (n.id === network.id) {
+                                            return {
+                                              ...n,
+                                              accounts: n.accounts.filter(a => a.id !== account.id)
+                                            };
+                                          }
+                                          return n;
+                                        });
+                                        setSocialNetworks(updatedNetworks);
+                                      }}
+                                      className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                    >
+                                      Déconnecter
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Link2 className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                              </div>
+                              <p className="text-gray-600 dark:text-gray-400 mb-1">
+                                Aucun compte {network.name} connecté
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-500">
+                                Connectez votre premier compte pour commencer
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <button className="text-red-600 hover:text-red-700 text-sm font-medium">
-                        Déconnecter
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={socialAccounts.tiktok}
-                      onChange={(e) => setSocialAccounts({...socialAccounts, tiktok: e.target.value})}
-                      placeholder="@username"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                          <Instagram className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">Instagram</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Connecté</p>
-                        </div>
-                      </div>
-                      <button className="text-red-600 hover:text-red-700 text-sm font-medium">
-                        Déconnecter
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={socialAccounts.instagram}
-                      onChange={(e) => setSocialAccounts({...socialAccounts, instagram: e.target.value})}
-                      placeholder="@username"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                          <Youtube className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">YouTube</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Connecté</p>
-                        </div>
-                      </div>
-                      <button className="text-red-600 hover:text-red-700 text-sm font-medium">
-                        Déconnecter
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={socialAccounts.youtube}
-                      onChange={(e) => setSocialAccounts({...socialAccounts, youtube: e.target.value})}
-                      placeholder="Channel name"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <button className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                    + Ajouter un autre réseau social
-                  </button>
+                    );
+                  })}
                 </div>
+
+                {/* Upgrade CTA for non-Goat users */}
+                {currentSubscription !== 'goat' && (
+                  <div className="mt-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">
+                          Besoin de plus de comptes ?
+                        </h3>
+                        <p className="text-white/90 text-sm">
+                          Passez au plan {currentSubscription === 'pro' ? 'Goat pour des comptes illimités' :
+                                         currentSubscription === 'starter' ? 'Pro pour jusqu\'à 4 comptes par réseau' :
+                                         'Starter pour doubler vos limites'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => router.push('/dashboard/clipper/subscription')}
+                        className="px-4 py-2 bg-white/20 backdrop-blur rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
+                      >
+                        <Crown className="w-5 h-5" />
+                        Upgrader
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -817,6 +1055,100 @@ export default function ClipperSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Connect Account Modal */}
+      {showConnectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Connecter un compte {socialNetworks.find(n => n.id === showConnectModal)?.name}
+              </h3>
+              <button
+                onClick={() => setShowConnectModal(null)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nom d'utilisateur
+                </label>
+                <input
+                  type="text"
+                  placeholder={showConnectModal === 'youtube' ? 'Nom de la chaîne' : '@username'}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Vous serez redirigé vers {socialNetworks.find(n => n.id === showConnectModal)?.name} pour autoriser l'accès à votre compte.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConnectModal(null)}
+                  className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    setConnectingAccount(true);
+                    // Simulate account connection
+                    setTimeout(() => {
+                      const network = socialNetworks.find(n => n.id === showConnectModal);
+                      if (network) {
+                        const newAccount: SocialAccount = {
+                          id: `${showConnectModal}-${Date.now()}`,
+                          username: 'new_account',
+                          handle: '@new_account',
+                          connected: true,
+                          lastSync: new Date().toLocaleString('fr-FR'),
+                          followers: Math.floor(Math.random() * 50000),
+                          status: 'active'
+                        };
+                        
+                        const updatedNetworks = socialNetworks.map(n => {
+                          if (n.id === showConnectModal) {
+                            return {
+                              ...n,
+                              accounts: [...n.accounts, newAccount]
+                            };
+                          }
+                          return n;
+                        });
+                        setSocialNetworks(updatedNetworks);
+                      }
+                      setConnectingAccount(false);
+                      setShowConnectModal(null);
+                    }, 2000);
+                  }}
+                  disabled={connectingAccount}
+                  className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {connectingAccount ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Connexion...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="w-5 h-5" />
+                      Connecter le compte
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
