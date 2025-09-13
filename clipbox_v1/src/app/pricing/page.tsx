@@ -33,198 +33,258 @@ interface PlanFeature {
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [userType, setUserType] = useState<'clipper' | 'advertiser'>('clipper');
 
-  // Calcul des prix avec réduction annuelle
-  const prices = {
-    basic: {
-      monthly: 8,
-      yearly: Math.round(8 * 12 * 0.8), // 20% de réduction
-      yearlyMonthly: Math.round((8 * 12 * 0.8) / 12 * 100) / 100
+  // Prix pour les Clippers (depuis le dashboard)
+  const clipperPrices = {
+    free: {
+      monthly: 0,
+      yearly: 0,
+      yearlyMonthly: 0
+    },
+    starter: {
+      monthly: 14,
+      yearly: 140,
+      yearlyMonthly: Math.round((140) / 12 * 100) / 100
     },
     pro: {
-      monthly: 20,
-      yearly: Math.round(20 * 12 * 0.8),
-      yearlyMonthly: Math.round((20 * 12 * 0.8) / 12 * 100) / 100
+      monthly: 27,
+      yearly: 270,
+      yearlyMonthly: Math.round((270) / 12 * 100) / 100
     },
     goat: {
-      monthly: 50,
-      yearly: Math.round(50 * 12 * 0.8),
-      yearlyMonthly: Math.round((50 * 12 * 0.8) / 12 * 100) / 100
+      monthly: 49,
+      yearly: 490,
+      yearlyMonthly: Math.round((490) / 12 * 100) / 100
     }
   };
 
-  const plans = [
+  // Prix pour les Annonceurs
+  const advertiserPrices = {
+    free: {
+      monthly: 0,
+      yearly: 0,
+      yearlyMonthly: 0
+    },
+    starter: {
+      monthly: 59,
+      yearly: Math.round(59 * 12 * 0.8),
+      yearlyMonthly: Math.round((59 * 12 * 0.8) / 12 * 100) / 100
+    },
+    growth: {
+      monthly: 110,
+      yearly: Math.round(110 * 12 * 0.8),
+      yearlyMonthly: Math.round((110 * 12 * 0.8) / 12 * 100) / 100
+    },
+    business: {
+      monthly: 199,
+      yearly: Math.round(199 * 12 * 0.8),
+      yearlyMonthly: Math.round((199 * 12 * 0.8) / 12 * 100) / 100
+    }
+  };
+
+  // Plans pour les Clippers
+  const clipperPlans = [
     {
-      id: 'basic',
-      name: 'Basic',
+      id: 'free',
+      name: 'Gratuit',
       icon: <Zap className="w-8 h-8" />,
-      description: 'Parfait pour débuter et tester la plateforme',
-      price: billingPeriod === 'monthly' ? prices.basic.monthly : prices.basic.yearlyMonthly,
-      yearlyPrice: prices.basic.yearly,
-      color: 'blue',
+      description: 'Pour débuter sur ClipBox',
+      price: billingPeriod === 'monthly' ? clipperPrices.free.monthly : clipperPrices.free.yearlyMonthly,
+      yearlyPrice: clipperPrices.free.yearly,
+      color: 'gray',
       features: [
-        '2 connexions réseaux sociaux',
-        'Commission 20%',
-        'Support email',
-        'Analytics de base',
-        'Tableau de bord simplifié',
-        'Paiements mensuels'
+        '1 campagne simultanée',
+        'Maximum 1 compte par réseau social',
+        'Maximum 2 vidéos par campagne',
+        'Commission de 20%',
+        'Retrait bi-mensuel',
+        'Support par email',
+        'Statistiques de base',
+        'Profil public basique'
       ],
       limitations: [
-        'Pas d\'export de données',
-        'Pas d\'analytics avancées',
-        'Pas d\'API',
+        'Pas d\'accès prioritaire aux campagnes',
+        'Pas de badge vérifié',
+        'Pas d\'analytics avancés',
         'Pas de support prioritaire'
+      ]
+    },
+    {
+      id: 'starter',
+      name: 'Starter',
+      icon: <Star className="w-8 h-8" />,
+      description: 'Pour les créateurs réguliers',
+      price: billingPeriod === 'monthly' ? clipperPrices.starter.monthly : clipperPrices.starter.yearlyMonthly,
+      yearlyPrice: clipperPrices.starter.yearly,
+      color: 'blue',
+      features: [
+        '3 campagnes simultanées',
+        'Maximum 2 comptes par réseau social',
+        'Maximum 6 vidéos par campagne',
+        'Commission réduite (15%)',
+        'Retrait hebdomadaire',
+        'Support par email et chat',
+        'Statistiques détaillées',
+        'Profil public personnalisé',
+        'Accès prioritaire aux campagnes'
+      ],
+      limitations: [
+        'Pas de badge vérifié',
+        'Pas d\'analytics avancés',
+        'Pas de formations exclusives'
       ]
     },
     {
       id: 'pro',
       name: 'Pro',
-      icon: <Star className="w-8 h-8" />,
-      description: 'Pour les créateurs et marques ambitieux',
-      price: billingPeriod === 'monthly' ? prices.pro.monthly : prices.pro.yearlyMonthly,
-      yearlyPrice: prices.pro.yearly,
-      color: 'green',
+      icon: <Crown className="w-8 h-8" />,
+      description: 'Pour les créateurs professionnels',
+      price: billingPeriod === 'monthly' ? clipperPrices.pro.monthly : clipperPrices.pro.yearlyMonthly,
+      yearlyPrice: clipperPrices.pro.yearly,
+      color: 'purple',
       popular: true,
       features: [
-        '5 connexions réseaux sociaux',
-        'Commission 15%',
+        '8 campagnes simultanées',
+        'Campagnes illimitées au total',
+        'Maximum 4 comptes par réseau social',
+        'Maximum 10 vidéos par campagne',
+        'Commission réduite (10%)',
+        'Retraits instantanés',
         'Support prioritaire',
-        'Analytics avancées',
-        'Export des données CSV/PDF',
-        'Tableau de bord complet',
-        'Paiements bi-mensuels',
-        'Campagnes illimitées',
-        'Statistiques en temps réel'
+        'Analytics complets',
+        'Profil premium avec portfolio',
+        'Badge vérifié Pro',
+        'Analytics avancés avec IA',
+        'Formations exclusives'
       ],
       limitations: [
-        'Pas d\'API',
-        'Pas de badge exclusif'
+        'Pas d\'outils de création IA'
       ]
     },
     {
       id: 'goat',
-      name: 'GOAT',
-      icon: <Crown className="w-8 h-8" />,
-      description: 'L\'expérience ultime sans aucune limite',
-      price: billingPeriod === 'monthly' ? prices.goat.monthly : prices.goat.yearlyMonthly,
-      yearlyPrice: prices.goat.yearly,
-      color: 'purple',
+      name: 'Goat',
+      icon: <Award className="w-8 h-8" />,
+      description: 'Pour les top créateurs',
+      price: billingPeriod === 'monthly' ? clipperPrices.goat.monthly : clipperPrices.goat.yearlyMonthly,
+      yearlyPrice: clipperPrices.goat.yearly,
+      color: 'yellow',
       features: [
-        'Connexions illimitées',
-        'Commission 10%',
-        'Support dédié 24/7',
-        'Analytics complètes',
-        'API access complet',
-        'Badge exclusif GOAT',
-        'Export illimité',
-        'Paiements hebdomadaires',
+        'Campagnes illimitées',
+        'Comptes illimités par réseau social',
+        'Vidéos illimitées par campagne',
+        'Commission minimale (5%)',
+        'Retraits instantanés',
+        'Support prioritaire 24/7',
         'Account manager dédié',
-        'Formations exclusives',
-        'Accès bêta aux nouvelles fonctionnalités',
-        'Personnalisation avancée'
+        'Analytics prédictifs avec IA',
+        'Page de marque personnalisée',
+        'Accès VIP aux campagnes premium',
+        'Badge Goat exclusif',
+        'Tableau de bord personnalisé',
+        'Masterclass mensuelles',
+        'Suite complète d\'outils IA'
       ],
       limitations: []
     }
   ];
 
-  const allFeatures: PlanFeature[] = [
+  // Plans pour les Annonceurs
+  const advertiserPlans = [
     {
-      name: 'Connexions réseaux sociaux',
-      basic: '2',
-      pro: '5',
-      goat: 'Illimitées',
-      info: 'Nombre de comptes sociaux que vous pouvez connecter'
+      id: 'free',
+      name: 'Gratuit',
+      icon: <Zap className="w-8 h-8" />,
+      description: 'Pour tester la plateforme',
+      price: billingPeriod === 'monthly' ? advertiserPrices.free.monthly : advertiserPrices.free.yearlyMonthly,
+      yearlyPrice: advertiserPrices.free.yearly,
+      color: 'gray',
+      features: [
+        '1 campagne max',
+        'Retour analytics tous les 3 jours',
+        '20 clippers max',
+        'Budget 2k€',
+        'Support mail'
+      ],
+      limitations: [
+        'Pas de support prioritaire',
+        'Pas d\'exports de données',
+        'Analytics limités'
+      ]
     },
     {
-      name: 'Commission plateforme',
-      basic: '20%',
-      pro: '15%',
-      goat: '10%',
-      info: 'Pourcentage prélevé sur vos gains'
+      id: 'starter',
+      name: 'Starter',
+      icon: <Star className="w-8 h-8" />,
+      description: 'Pour les petites entreprises',
+      price: billingPeriod === 'monthly' ? advertiserPrices.starter.monthly : advertiserPrices.starter.yearlyMonthly,
+      yearlyPrice: advertiserPrices.starter.yearly,
+      color: 'blue',
+      features: [
+        '5 campagnes max',
+        'Support prioritaire',
+        'Budget max 8K€ par mois',
+        'Retour analytics performances clippers toutes les 48h',
+        '30 clippers max',
+        'Analytics et rapports : basiques'
+      ],
+      limitations: [
+        'Pas d\'export de données analytics',
+        'Pas d\'accès beta',
+        'Pas d\'account manager'
+      ]
     },
     {
-      name: 'Support client',
-      basic: 'Email',
-      pro: 'Prioritaire',
-      goat: 'Dédié 24/7',
-      info: 'Niveau d\'assistance disponible'
+      id: 'growth',
+      name: 'Growth',
+      icon: <TrendingUp className="w-8 h-8" />,
+      description: 'Pour les entreprises en croissance',
+      price: billingPeriod === 'monthly' ? advertiserPrices.growth.monthly : advertiserPrices.growth.yearlyMonthly,
+      yearlyPrice: advertiserPrices.growth.yearly,
+      color: 'green',
+      popular: true,
+      features: [
+        '10 campagnes max',
+        'Support prioritaire',
+        'Budget max 25k€ par mois',
+        'Retour analytics performances clippers en 24h',
+        'Clippers illimités',
+        'Analytics et rapports : avancés',
+        'Exports données analytics : CSV / PDF'
+      ],
+      limitations: [
+        'Pas d\'accès beta',
+        'Pas d\'account manager',
+        'Frais de services standards'
+      ]
     },
     {
-      name: 'Analytics et rapports',
-      basic: 'Basiques',
-      pro: 'Avancés',
-      goat: 'Complets + IA',
-      info: 'Profondeur des analyses disponibles'
-    },
-    {
-      name: 'Export de données',
-      basic: false,
-      pro: 'CSV/PDF',
-      goat: 'Tous formats',
-      info: 'Formats d\'export disponibles'
-    },
-    {
-      name: 'Fréquence de paiement',
-      basic: 'Mensuelle',
-      pro: 'Bi-mensuelle',
-      goat: 'Hebdomadaire',
-      info: 'Rapidité de versement de vos gains'
-    },
-    {
-      name: 'API Access',
-      basic: false,
-      pro: false,
-      goat: true,
-      info: 'Accès programmatique à la plateforme'
-    },
-    {
-      name: 'Badge exclusif',
-      basic: false,
-      pro: false,
-      goat: true,
-      info: 'Badge de prestige sur votre profil'
-    },
-    {
-      name: 'Account manager',
-      basic: false,
-      pro: false,
-      goat: true,
-      info: 'Gestionnaire de compte personnel'
-    },
-    {
-      name: 'Formations exclusives',
-      basic: false,
-      pro: false,
-      goat: true,
-      info: 'Accès à des masterclass et webinaires'
-    },
-    {
-      name: 'Accès bêta',
-      basic: false,
-      pro: false,
-      goat: true,
-      info: 'Testez les nouvelles fonctionnalités en avant-première'
-    },
-    {
-      name: 'Campagnes simultanées',
-      basic: '3',
-      pro: 'Illimitées',
-      goat: 'Illimitées',
-      info: 'Nombre de campagnes actives en même temps'
+      id: 'business',
+      name: 'Business',
+      icon: <Crown className="w-8 h-8" />,
+      description: 'Pour les grandes entreprises',
+      price: billingPeriod === 'monthly' ? advertiserPrices.business.monthly : advertiserPrices.business.yearlyMonthly,
+      yearlyPrice: advertiserPrices.business.yearly,
+      color: 'purple',
+      features: [
+        'Campagnes illimitées',
+        'Réduction des frais de services à 10%',
+        'Support dédié 24/7',
+        'Budget illimité',
+        'Retour analytics performances clippers en temps réel',
+        'Clippers illimités',
+        'Analytics et rapports : complet avec IA',
+        'Exports données analytics : tout format',
+        'Accès beta',
+        'Account manager'
+      ],
+      limitations: []
     }
   ];
 
-  const getFeatureValue = (value: boolean | string) => {
-    if (typeof value === 'boolean') {
-      return value ? (
-        <Check className="w-5 h-5 text-green-500" />
-      ) : (
-        <X className="w-5 h-5 text-gray-400" />
-      );
-    }
-    return <span className="text-sm font-medium">{value}</span>;
-  };
+  const plans = userType === 'clipper' ? clipperPlans : advertiserPlans;
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -239,6 +299,32 @@ export default function PricingPage() {
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-8">
             Des tarifs transparents adaptés à vos besoins, sans frais cachés
           </p>
+
+          {/* User Type Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
+              <button
+                onClick={() => setUserType('clipper')}
+                className={`px-6 py-3 rounded-md transition-colors font-medium ${
+                  userType === 'clipper'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Je suis Clipper
+              </button>
+              <button
+                onClick={() => setUserType('advertiser')}
+                className={`px-6 py-3 rounded-md transition-colors font-medium ${
+                  userType === 'advertiser'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Je suis Annonceur
+              </button>
+            </div>
+          </div>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4">
@@ -263,7 +349,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className={`grid grid-cols-1 ${userType === 'clipper' ? 'md:grid-cols-4' : 'md:grid-cols-4'} gap-8 mb-16`}>
           {plans.map((plan) => (
             <div
               key={plan.id}
@@ -345,80 +431,6 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Detailed Comparison Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-16">
-          <div className="p-8 bg-gradient-to-r from-blue-500 to-green-500">
-            <h2 className="text-3xl font-bold text-white text-center">
-              Comparaison détaillée des fonctionnalités
-            </h2>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left p-6 font-semibold text-gray-900 dark:text-white">
-                    Fonctionnalité
-                  </th>
-                  <th className="text-center p-6">
-                    <div className="flex flex-col items-center">
-                      <Zap className="w-6 h-6 text-blue-500 mb-2" />
-                      <span className="font-semibold text-gray-900 dark:text-white">Basic</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{prices.basic.monthly}€/mois</span>
-                    </div>
-                  </th>
-                  <th className="text-center p-6">
-                    <div className="flex flex-col items-center">
-                      <Star className="w-6 h-6 text-green-500 mb-2" />
-                      <span className="font-semibold text-gray-900 dark:text-white">Pro</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{prices.pro.monthly}€/mois</span>
-                    </div>
-                  </th>
-                  <th className="text-center p-6">
-                    <div className="flex flex-col items-center">
-                      <Crown className="w-6 h-6 text-purple-500 mb-2" />
-                      <span className="font-semibold text-gray-900 dark:text-white">GOAT</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{prices.goat.monthly}€/mois</span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {allFeatures.map((feature, index) => (
-                  <tr
-                    key={index}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <td className="p-6">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {feature.name}
-                        </span>
-                        {feature.info && (
-                          <div className="group relative">
-                            <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                              {feature.info}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-6 text-center">
-                      {getFeatureValue(feature.basic)}
-                    </td>
-                    <td className="p-6 text-center">
-                      {getFeatureValue(feature.pro)}
-                    </td>
-                    <td className="p-6 text-center">
-                      {getFeatureValue(feature.goat)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
         {/* Trust Badges */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
@@ -516,7 +528,7 @@ export default function PricingPage() {
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-500 to-green-500 rounded-2xl p-8 md:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">
-            Prêt à booster votre activité ?
+            Prêts à transformer vos clips en revenus ?
           </h2>
           <p className="text-xl mb-8 opacity-90">
             Rejoignez des milliers d'utilisateurs satisfaits et commencez dès aujourd'hui
