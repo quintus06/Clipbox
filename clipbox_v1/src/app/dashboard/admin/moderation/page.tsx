@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Shield,
   Video,
@@ -60,10 +60,21 @@ interface ModerationItem {
 
 export default function AdminModerationPage() {
   const searchParams = useSearchParams();
-  const typeFilter = searchParams.get('type') || 'all';
+  const router = useRouter();
+  const typeParam = searchParams.get('type');
+  
+  // Map URL parameter to activeTab value
+  const getTabFromParam = (param: string | null): 'all' | 'campaigns' | 'clippers' | 'videos' | 'withdrawals' => {
+    if (!param) return 'all';
+    if (param === 'campaigns') return 'campaigns';
+    if (param === 'clippers') return 'clippers';
+    if (param === 'videos') return 'videos';
+    if (param === 'withdrawals') return 'withdrawals';
+    return 'all';
+  };
   
   const [activeTab, setActiveTab] = useState<'all' | 'campaigns' | 'clippers' | 'videos' | 'withdrawals'>(
-    (typeFilter as any) || 'all'
+    getTabFromParam(typeParam)
   );
   const [items, setItems] = useState<ModerationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,6 +214,12 @@ export default function AdminModerationPage() {
       }
     }
   ];
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    const newTab = getTabFromParam(searchParams.get('type'));
+    setActiveTab(newTab);
+  }, [searchParams]);
 
   useEffect(() => {
     // Filtrer les items selon l'onglet actif
@@ -416,7 +433,16 @@ export default function AdminModerationPage() {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  // Update URL when clicking tabs
+                  if (tab.id === 'all') {
+                    router.push('/dashboard/admin/moderation');
+                  } else if (tab.id === 'withdrawals') {
+                    router.push('/dashboard/admin/moderation?type=withdrawals');
+                  } else {
+                    router.push(`/dashboard/admin/moderation?type=${tab.id}`);
+                  }
+                }}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-purple-600 text-purple-600'

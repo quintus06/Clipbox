@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   LayoutDashboard,
@@ -47,9 +47,13 @@ interface NavItem {
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  
+  // Get the full URL with query parameters
+  const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
 
   const navigation: NavItem[] = [
     {
@@ -91,9 +95,9 @@ export default function AdminSidebar() {
       icon: BarChart3,
       subItems: [
         { name: 'Dashboard', href: '/dashboard/admin/analytics' },
-        { name: 'Revenus', href: '/dashboard/admin/analytics/revenue' },
-        { name: 'Utilisateurs', href: '/dashboard/admin/analytics/users' },
-        { name: 'Performances', href: '/dashboard/admin/analytics/performance' }
+        { name: 'Revenus', href: '/dashboard/admin/analytics?view=revenue' },
+        { name: 'Utilisateurs', href: '/dashboard/admin/analytics?view=users' },
+        { name: 'Performances', href: '/dashboard/admin/analytics?view=performance' }
       ]
     },
     {
@@ -104,9 +108,9 @@ export default function AdminSidebar() {
       badgeColor: 'bg-yellow-500',
       subItems: [
         { name: 'Transactions', href: '/dashboard/admin/payments' },
-        { name: 'Retraits', href: '/dashboard/admin/payments/withdrawals', badge: 8 },
-        { name: 'Rechargements', href: '/dashboard/admin/payments/deposits' },
-        { name: 'Litiges', href: '/dashboard/admin/payments/disputes' }
+        { name: 'Retraits', href: '/dashboard/admin/payments?type=withdrawals', badge: 8 },
+        { name: 'Rechargements', href: '/dashboard/admin/payments?type=deposits' },
+        { name: 'Litiges', href: '/dashboard/admin/payments?type=disputes' }
       ]
     },
     {
@@ -270,7 +274,7 @@ export default function AdminSidebar() {
                         key={subItem.href}
                         href={subItem.href}
                         className={`group flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
-                          pathname === subItem.href
+                          fullPath === subItem.href
                             ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
