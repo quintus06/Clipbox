@@ -52,15 +52,21 @@ export async function GET(request: NextRequest) {
     console.log('Redirect URI:', redirectUri);
     console.log('Client ID configured:', !!process.env.GOOGLE_CLIENT_ID);
 
-    // Generate state parameter for CSRF protection
-    const state = generateOAuthState();
+    // Get parameters from request
+    const searchParams = request.nextUrl.searchParams;
+    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    const role = searchParams.get('role') || 'CLIPPER'; // Default to CLIPPER if not provided
+
+    // Generate state parameter for CSRF protection with role encoded
+    const stateData = {
+      random: generateOAuthState(),
+      role: role,
+      callbackUrl: callbackUrl,
+    };
+    const state = Buffer.from(JSON.stringify(stateData)).toString('base64');
     
     // Generate PKCE parameters for enhanced security
     const { codeVerifier, codeChallenge } = generatePKCE();
-
-    // Get the callback URL parameter (where to redirect after successful auth)
-    const searchParams = request.nextUrl.searchParams;
-    const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
     // Construct Google OAuth URL
     const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
@@ -76,7 +82,7 @@ export async function GET(request: NextRequest) {
         code_challenge_method: 'S256',
       }).toString();
 
-    console.log('Redirecting to Google OAuth...');
+    console.log('Redirecting to Google OAuth with role:', role);
 
     const response = NextResponse.redirect(authUrl);
 
@@ -91,15 +97,6 @@ export async function GET(request: NextRequest) {
 
     // Store code verifier for PKCE
     response.cookies.set('google_code_verifier', codeVerifier, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 600,
-      path: '/',
-    });
-
-    // Store callback URL for after authentication
-    response.cookies.set('google_callback_url', callbackUrl, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

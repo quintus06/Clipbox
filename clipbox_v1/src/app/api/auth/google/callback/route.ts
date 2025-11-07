@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify state parameter
+    // Verify and decode state parameter
     const storedState = request.cookies.get('google_oauth_state')?.value;
     if (!state || state !== storedState) {
       console.error('OAuth state mismatch:', { received: state, stored: storedState });
@@ -56,6 +56,23 @@ export async function GET(request: NextRequest) {
         )
       );
     }
+
+    // Decode state to extract role and callback URL
+    let stateData: { random: string; role: string; callbackUrl: string };
+    try {
+      stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
+    } catch (err) {
+      console.error('Failed to decode state:', err);
+      return NextResponse.redirect(
+        new URL(
+          '/auth/signin?error=' + encodeURIComponent('État OAuth invalide'),
+          request.url
+        )
+      );
+    }
+
+    const role = stateData.role || 'CLIPPER';
+    const callbackUrl = stateData.callbackUrl || '/dashboard';
 
     // Get code verifier for PKCE
     const codeVerifier = request.cookies.get('google_code_verifier')?.value;
@@ -68,9 +85,6 @@ export async function GET(request: NextRequest) {
         )
       );
     }
-
-    // Get callback URL
-    const callbackUrl = request.cookies.get('google_callback_url')?.value || '/dashboard';
 
     if (!code) {
       console.error('Authorization code missing from callback');
@@ -162,14 +176,15 @@ export async function GET(request: NextRequest) {
     let redirectUrl = callbackUrl;
 
     if (!user) {
-      // Create new user - default to CLIPPER role
-      // User can change role later in their profile
+      // Create new user with selected role
+      const userRole = role === 'ADVERTISER' ? 'ADVERTISER' : 'CLIPPER';
+      
       user = await prisma.user.create({
         data: {
           email: googleUser.email,
           name: googleUser.name,
           image: googleUser.picture,
-          role: 'CLIPPER', // Default role for Google OAuth users
+          role: userRole,
           profile: {
             create: {
               notifyEmail: true,
@@ -183,8 +198,10 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      console.log('[Google OAuth] New user created:', user.email);
-      redirectUrl = '/dashboard/clipper'; // Redirect new users to clipper dashboard
+      console.log('[Google OAuth] New user created with role:', userRole, 'email:', user.email);
+      
+      // Redirect based on selected role
+      redirectUrl = userRole === 'ADVERTISER' ? '/dashboard/advertiser' : '/dashboard/clipper';
     } else {
       // Update user image if changed
       if (user.image !== googleUser.picture) {
@@ -216,7 +233,6 @@ export async function GET(request: NextRequest) {
     
     response.cookies.delete('google_oauth_state');
     response.cookies.delete('google_code_verifier');
-    response.cookies.delete('google_callback_url');
 
     // Set auth token
     response.cookies.set('auth-token', token, {

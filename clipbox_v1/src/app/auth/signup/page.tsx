@@ -1,22 +1,18 @@
 // src/app/auth/signup/page.tsx
 
+"use client";
+
+import { useState } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { useSearchParams } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Inscription - Clipbox",
-  description: "Créez votre compte Clipbox",
-};
-
-export default async function SignUpPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ callbackUrl?: string }>;
-}) {
-  const params = await searchParams;
-  // Note: La vérification de session est maintenant gérée côté client dans SignupForm
+export default function SignUpPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const [selectedRole, setSelectedRole] = useState<"CLIPPER" | "ADVERTISER" | null>(null);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -44,13 +40,56 @@ export default async function SignUpPage({
 
         {/* Main Content */}
         <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+          {/* Role Selection */}
+          <div className="mb-6 space-y-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Choisissez votre type de compte
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedRole("CLIPPER")}
+                className={`p-4 border-2 rounded-lg text-center transition-all ${
+                  selectedRole === "CLIPPER"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                }`}
+              >
+                <div className="text-2xl mb-2">🎬</div>
+                <div className="font-medium text-gray-900 dark:text-white">Clipper</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Je crée des clips vidéo
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedRole("ADVERTISER")}
+                className={`p-4 border-2 rounded-lg text-center transition-all ${
+                  selectedRole === "ADVERTISER"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                }`}
+              >
+                <div className="text-2xl mb-2">📢</div>
+                <div className="font-medium text-gray-900 dark:text-white">Annonceur</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Je cherche des clippers
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* OAuth Buttons */}
           <div className="mb-6">
-            <OAuthButtons callbackUrl={params.callbackUrl || "/dashboard"} />
+            <OAuthButtons
+              callbackUrl={callbackUrl}
+              role={selectedRole}
+            />
           </div>
 
           {/* Signup Form */}
-          <SignupForm />
+          <SignupForm selectedRole={selectedRole} />
         </div>
 
         {/* Benefits Section */}

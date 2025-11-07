@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,12 +26,15 @@ const signupSchema = z.object({
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-export function SignupForm() {
+interface SignupFormProps {
+  selectedRole?: "CLIPPER" | "ADVERTISER" | null;
+}
+
+export function SignupForm({ selectedRole: externalRole }: SignupFormProps) {
   const router = useRouter();
   const { register: registerUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<"CLIPPER" | "ADVERTISER" | null>(null);
 
   const {
     register,
@@ -44,6 +47,13 @@ export function SignupForm() {
   });
 
   const watchRole = watch("role");
+
+  // Sync external role selection with form
+  useEffect(() => {
+    if (externalRole) {
+      setValue("role", externalRole);
+    }
+  }, [externalRole, setValue]);
 
   const onSubmit = async (data: SignupFormData) => {
     try {
@@ -75,54 +85,6 @@ export function SignupForm() {
         </div>
       )}
 
-      {/* Role Selection */}
-      <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Type de compte
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setValue("role", "CLIPPER");
-              setSelectedRole("CLIPPER");
-            }}
-            className={`p-4 border-2 rounded-lg text-center transition-all ${
-              watchRole === "CLIPPER"
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
-            }`}
-          >
-            <div className="text-2xl mb-2">🎬</div>
-            <div className="font-medium text-gray-900 dark:text-white">Clipper</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Je crée des clips vidéo
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setValue("role", "ADVERTISER");
-              setSelectedRole("ADVERTISER");
-            }}
-            className={`p-4 border-2 rounded-lg text-center transition-all ${
-              watchRole === "ADVERTISER"
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
-            }`}
-          >
-            <div className="text-2xl mb-2">📢</div>
-            <div className="font-medium text-gray-900 dark:text-white">Annonceur</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Je cherche des clippers
-            </div>
-          </button>
-        </div>
-        {errors.role && (
-          <p className="text-sm text-red-600 dark:text-red-400">{errors.role.message}</p>
-        )}
-      </div>
 
       {/* Name Field */}
       <div>

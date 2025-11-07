@@ -5,9 +5,10 @@ import { useState } from "react";
 
 interface OAuthButtonsProps {
   callbackUrl?: string;
+  role?: "CLIPPER" | "ADVERTISER" | null;
 }
 
-export function OAuthButtons({ callbackUrl = "/dashboard" }: OAuthButtonsProps) {
+export function OAuthButtons({ callbackUrl = "/dashboard", role }: OAuthButtonsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,9 +17,17 @@ export function OAuthButtons({ callbackUrl = "/dashboard" }: OAuthButtonsProps) 
       setIsLoading(true);
       setError(null);
       
-      // Redirect to Google OAuth authorize endpoint
+      // Check if role is selected
+      if (!role) {
+        setError("Veuillez sélectionner un type de compte avant de continuer.");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Redirect to Google OAuth authorize endpoint with role
       const params = new URLSearchParams({
         callbackUrl: callbackUrl,
+        role: role,
       });
       
       window.location.href = `/api/auth/google/authorize?${params.toString()}`;
