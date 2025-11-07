@@ -99,9 +99,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('[Campaign Creation] Request body:', JSON.stringify(body, null, 2));
+    console.log('[Campaign Creation] User ID:', user.id);
     
     // Validation des données
     if (!body.title || !body.description || !body.budget || body.budget < 100) {
+      console.error('[Campaign Creation] Validation failed:', { title: body.title, description: body.description, budget: body.budget });
       return NextResponse.json(
         { error: 'Invalid campaign data' },
         { status: 400 }
@@ -109,13 +112,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier la balance disponible
+    console.log('[Campaign Creation] Checking balance for user:', user.id);
     const balance = await prisma.balance.findUnique({
       where: {
-        userId: user.id
+        userId_currency: {
+          userId: user.id,
+          currency: 'EUR'
+        }
       }
     });
 
-    if (!balance || balance.availableBalance < body.budget) {
+    console.log('[Campaign Creation] Balance found:', balance ? { available: balance.available.toString(), pending: balance.pending.toString() } : 'NO BALANCE RECORD');
+
+    if (!balance) {
+      console.error('[Campaign Creation] No balance record found for user:', user.id);
+      return NextResponse.json(
+        { error: 'Balance not initialized. Please contact support.' },
+        { status: 400 }
+      );
+    }
+
+    if (balance.available < body.budget) {
+      console.error('[Campaign Creation] Insufficient balance:', { available: balance.available.toString(), required: body.budget });
       return NextResponse.json(
         { error: 'Insufficient balance' },
         { status: 400 }
@@ -123,13 +141,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer la campagne
+    console.log('[Campaign Creation] Creating campaign...');
     const campaign = await prisma.campaign.create({
       data: {
         advertiserId: user.id,
         title: body.title,
         description: body.description,
         requirements: body.requirements,
-        videoUrl: body.videoUrl,
+        videoUrl: body.videoUrl || null,
         budget: body.budget,
         remainingBudget: body.budget,
         paymentRatio: body.paymentRatio || 70,
@@ -141,26 +160,35 @@ export async function POST(request: NextRequest) {
         maxClippers: body.maxClippers || 50,
         startDate: new Date(),
         endDate: new Date(Date.now() + (body.duration || 2) * 30 * 24 * 60 * 60 * 1000),
-        status: 'PENDING' // En attente de validation admin
+        status: 'DRAFT' // Changed from PENDING to DRAFT (valid enum value)
       }
     });
 
+    console.log('[Campaign Creation] Campaign created:', campaign.id);
+
     // Mettre à jour la balance (engager le budget)
+    console.log('[Campaign Creation] Updating balance...');
     await prisma.balance.update({
       where: {
-        userId: user.id
+        userId_currency: {
+          userId: user.id,
+          currency: 'EUR'
+        }
       },
       data: {
-        availableBalance: {
+        available: {
           decrement: body.budget
         },
-        lockedBalance: {
+        pending: {
           increment: body.budget
         }
       }
     });
 
+    console.log('[Campaign Creation] Balance updated');
+
     // Créer une transaction
+    console.log('[Campaign Creation] Creating transaction...');
     await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -168,15 +196,20 @@ export async function POST(request: NextRequest) {
         amount: -body.budget,
         description: `Budget engagé pour la campagne: ${body.title}`,
         status: 'COMPLETED',
-        reference: `CAMP-${campaign.id}`
+        campaignId: campaign.id
       }
     });
 
+    console.log('[Campaign Creation] Transaction created');
+    console.log('[Campaign Creation] SUCCESS - Campaign created:', campaign.id);
+
     return NextResponse.json(campaign, { status: 201 });
   } catch (error) {
-    console.error('Error creating campaign:', error);
+    console.error('[Campaign Creation] ERROR:', error);
+    console.error('[Campaign Creation] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[Campaign Creation] Error message:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
