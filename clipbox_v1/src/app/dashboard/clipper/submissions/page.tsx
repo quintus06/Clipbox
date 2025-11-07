@@ -27,88 +27,6 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Mock data - will be replaced with API calls
-const mockSubmissions = [
-  {
-    id: '1',
-    campaignId: '1',
-    campaignTitle: 'Summer Fashion Collection 2024',
-    platform: 'TIKTOK',
-    clipUrl: 'https://tiktok.com/@user/video/123456',
-    thumbnailUrl: 'https://via.placeholder.com/200x300',
-    status: 'APPROVED',
-    views: 45230,
-    likes: 3421,
-    shares: 234,
-    comments: 89,
-    amountEarned: 75,
-    submittedAt: '2024-01-28T10:30:00',
-    approvedAt: '2024-01-29T14:20:00',
-    publishedAt: '2024-01-28T11:00:00',
-    description: 'Summer vibes avec la nouvelle collection! ☀️👗 #fashion #summer2024',
-    reviewerNotes: 'Excellent travail, contenu engageant et conforme aux guidelines.',
-    lastMetricsUpdate: '2024-02-01T08:00:00',
-  },
-  {
-    id: '2',
-    campaignId: '2',
-    campaignTitle: 'Tech Review - Smartphone Pro Max',
-    platform: 'YOUTUBE_SHORTS',
-    clipUrl: 'https://youtube.com/shorts/abc123',
-    thumbnailUrl: 'https://via.placeholder.com/200x300',
-    status: 'PENDING',
-    views: 0,
-    likes: 0,
-    shares: 0,
-    comments: 0,
-    amountEarned: 0,
-    submittedAt: '2024-02-01T15:45:00',
-    publishedAt: '2024-02-01T16:00:00',
-    description: 'Unboxing et première impression du nouveau smartphone! 📱✨',
-    lastMetricsUpdate: null,
-  },
-  {
-    id: '3',
-    campaignId: '3',
-    campaignTitle: 'Fitness Challenge - 30 Days',
-    platform: 'INSTAGRAM_REELS',
-    clipUrl: 'https://instagram.com/reel/xyz789',
-    thumbnailUrl: 'https://via.placeholder.com/200x300',
-    status: 'REJECTED',
-    views: 0,
-    likes: 0,
-    shares: 0,
-    comments: 0,
-    amountEarned: 0,
-    submittedAt: '2024-01-25T09:15:00',
-    rejectedAt: '2024-01-26T11:30:00',
-    publishedAt: '2024-01-25T09:30:00',
-    description: 'Jour 1 du challenge fitness! 💪 #fitness #30daychallenge',
-    reviewerNotes: 'Le logo de la marque n\'est pas assez visible. Merci de refaire avec le logo en début de vidéo.',
-    revisionNotes: 'Ajouter le logo en intro (3 secondes minimum)',
-    lastMetricsUpdate: null,
-  },
-  {
-    id: '4',
-    campaignId: '4',
-    campaignTitle: 'Beauty Tutorial - Maquillage Naturel',
-    platform: 'INSTAGRAM_REELS',
-    clipUrl: 'https://instagram.com/reel/beauty123',
-    thumbnailUrl: 'https://via.placeholder.com/200x300',
-    status: 'REVISION_REQUESTED',
-    views: 12500,
-    likes: 890,
-    shares: 45,
-    comments: 23,
-    amountEarned: 0,
-    submittedAt: '2024-01-30T14:00:00',
-    publishedAt: '2024-01-30T14:30:00',
-    description: 'Tuto maquillage naturel avec les produits bio 🌿💄',
-    reviewerNotes: 'Bon contenu mais il manque la mention du code promo.',
-    revisionNotes: 'Ajouter le code promo BEAUTY20 en description et dans la vidéo',
-    lastMetricsUpdate: '2024-02-01T08:00:00',
-  },
-];
 
 const platformIcons: Record<string, string> = {
   TIKTOK: '📱',
@@ -140,9 +58,10 @@ const statusConfig = {
 };
 
 export default function SubmissionsPage() {
-  const [submissions, setSubmissions] = useState(mockSubmissions);
-  const [filteredSubmissions, setFilteredSubmissions] = useState(mockSubmissions);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     status: 'all',
@@ -154,8 +73,30 @@ export default function SubmissionsPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setLoading(false), 1000);
+    // Load submissions from API
+    const loadSubmissions = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await fetch('/api/clipper/submissions');
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors du chargement des soumissions');
+        }
+        
+        const data = await response.json();
+        setSubmissions(data.submissions || []);
+      } catch (err) {
+        console.error('Error loading submissions:', err);
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des soumissions');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSubmissions();
   }, []);
 
   useEffect(() => {
@@ -386,6 +327,29 @@ export default function SubmissionsPage() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                Erreur de chargement
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {error}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
+
       {/* Submissions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {loading ? (
@@ -495,15 +459,26 @@ export default function SubmissionsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    <a
-                      href={submission.clipUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Voir
-                    </a>
+                    {submission.clipUrl ? (
+                      <a
+                        href={submission.clipUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors text-sm"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Voir
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex-1 flex items-center justify-center px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-lg cursor-not-allowed text-sm"
+                        title="URL de la vidéo non disponible"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Voir
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setSelectedSubmission(submission);

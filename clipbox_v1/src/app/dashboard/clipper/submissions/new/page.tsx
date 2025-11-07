@@ -221,10 +221,42 @@ export default function NewSubmissionPage() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setLoading(false);
-    setShowSuccessModal(true);
+    
+    try {
+      // Prepare submission data
+      const submissionData = {
+        campaignId: selectedCampaign.id,
+        accountId: selectedAccount.id,
+        clipUrl: videoUrl,
+        description: description || undefined,
+      };
+
+      // Call the API to create submission
+      const response = await fetch('/api/clipper/submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle API errors
+        alert(data.error || 'Erreur lors de la soumission');
+        setLoading(false);
+        return;
+      }
+
+      // Success - show modal
+      setLoading(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Error submitting video:', error);
+      alert('Erreur lors de la soumission. Veuillez réessayer.');
+      setLoading(false);
+    }
   };
 
   const handleSuccessClose = () => {
