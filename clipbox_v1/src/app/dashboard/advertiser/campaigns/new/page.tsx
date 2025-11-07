@@ -163,7 +163,7 @@ export default function NewCampaignPage() {
         minFollowers: 1000, // Default value
         duration: formData.duration,
         targetCountries: formData.targetCountries,
-        targetLanguages: formData.targetLanguages,
+        targetLanguages: formData.targetLanguages.map(lang => lang.toUpperCase()), // Convert to uppercase for Language enum
       };
 
       const response = await fetch('/api/advertiser/campaigns', {
