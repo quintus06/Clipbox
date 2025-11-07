@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
 import { 
   ArrowLeft,
   ArrowRight,
@@ -61,35 +62,19 @@ const mockJoinedCampaigns = [
   },
 ];
 
-const mockAccounts = [
-  {
-    id: '1',
-    platform: 'TIKTOK',
-    username: '@fashionista_paris',
-    followers: 15420,
-    verified: true,
-    profilePic: 'https://via.placeholder.com/100',
-    engagementRate: 4.2,
-  },
-  {
-    id: '2',
-    platform: 'INSTAGRAM',
-    username: '@style_influencer',
-    followers: 8930,
-    verified: false,
-    profilePic: 'https://via.placeholder.com/100',
-    engagementRate: 3.8,
-  },
-  {
-    id: '3',
-    platform: 'YOUTUBE',
-    username: 'TechReviewer',
-    followers: 25600,
-    verified: true,
-    profilePic: 'https://via.placeholder.com/100',
-    engagementRate: 5.1,
-  },
-];
+// Social account interface matching API response
+interface SocialAccount {
+  id: string;
+  platform: string;
+  accountId: string;
+  username: string;
+  profileUrl: string | null;
+  followers: number | null;
+  isVerified: boolean;
+  lastSync: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const mockRecentVideos = [
   {
@@ -157,6 +142,7 @@ const platformIcons: Record<string, any> = {
 export default function NewSubmissionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const preselectedCampaignId = searchParams.get('campaignId');
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -167,6 +153,35 @@ export default function NewSubmissionPage() {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
+
+  // Load social accounts from API
+  useEffect(() => {
+    const loadSocialAccounts = async () => {
+      if (!user) return;
+      
+      setLoadingAccounts(true);
+      setAccountsError(null);
+      try {
+        const response = await fetch('/api/clipper/social-accounts');
+        if (response.ok) {
+          const data = await response.json();
+          setSocialAccounts(data.accounts || []);
+        } else {
+          setAccountsError('Erreur lors du chargement des comptes');
+        }
+      } catch (error) {
+        console.error('Error loading social accounts:', error);
+        setAccountsError('Erreur lors du chargement des comptes');
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+
+    loadSocialAccounts();
+  }, [user]);
 
   useEffect(() => {
     // If a campaign ID is provided in the URL, preselect it
@@ -220,13 +235,14 @@ export default function NewSubmissionPage() {
 
   // Filter accounts based on selected campaign platforms
   const filteredAccounts = selectedCampaign
-    ? mockAccounts.filter(account => {
+    ? socialAccounts.filter(account => {
         const platformMap: Record<string, string[]> = {
           'TIKTOK': ['TIKTOK'],
-          'INSTAGRAM': ['INSTAGRAM_REELS'],
-          'YOUTUBE': ['YOUTUBE_SHORTS'],
+          'INSTAGRAM_REELS': ['INSTAGRAM_REELS'],
+          'YOUTUBE_SHORTS': ['YOUTUBE_SHORTS'],
+          'TWITTER': ['TWITTER'],
         };
-        return selectedCampaign.platforms.some((p: string) => 
+        return selectedCampaign.platforms.some((p: string) =>
           platformMap[account.platform]?.includes(p)
         );
       })
@@ -392,7 +408,27 @@ export default function NewSubmissionPage() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredAccounts.length > 0 ? (
+              {loadingAccounts ? (
+                <div className="col-span-2 text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Chargement de vos comptes...
+                  </p>
+                </div>
+              ) : accountsError ? (
+                <div className="col-span-2 text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                  <p className="text-red-600 dark:text-red-400 mb-4">
+                    {accountsError}
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              ) : filteredAccounts.length > 0 ? (
                 filteredAccounts.map((account) => {
                   const Icon = platformIcons[account.platform];
                   return (
@@ -407,22 +443,28 @@ export default function NewSubmissionPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                          {Icon ? (
+                            <Icon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                              {account.platform.substring(0, 2)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h3 className="font-medium text-gray-900 dark:text-white">
-                              {account.username}
+                              @{account.username}
                             </h3>
-                            {account.verified && (
+                            {account.isVerified && (
                               <CheckCircle className="h-4 w-4 text-blue-500" />
                             )}
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {account.followers.toLocaleString()} followers
+                            {account.followers ? account.followers.toLocaleString() : '0'} followers
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Engagement: {account.engagementRate}%
+                            {account.platform.replace('_', ' ')}
                           </p>
                         </div>
                         {selectedAccount?.id === account.id && (
@@ -435,14 +477,21 @@ export default function NewSubmissionPage() {
               ) : (
                 <div className="col-span-2 text-center py-8">
                   <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Aucun compte compatible trouvé pour cette campagne
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    {socialAccounts.length === 0
+                      ? 'Aucun compte connecté'
+                      : 'Aucun compte compatible trouvé pour cette campagne'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
+                    {socialAccounts.length === 0
+                      ? 'Connectez vos comptes sociaux pour commencer'
+                      : 'Connectez un compte compatible avec les plateformes de cette campagne'}
                   </p>
                   <Link
-                    href="/dashboard/clipper/profile#accounts"
-                    className="mt-4 inline-flex items-center text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                    href="/dashboard/clipper/settings?tab=social"
+                    className="inline-flex items-center text-sm text-purple-600 dark:text-purple-400 hover:underline"
                   >
-                    Ajouter un compte
+                    Gérer mes comptes
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </div>
