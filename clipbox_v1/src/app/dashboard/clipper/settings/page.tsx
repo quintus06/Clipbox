@@ -135,8 +135,8 @@ export default function ClipperSettingsPage() {
       const networkAccounts = accounts
         .filter(acc => {
           if (network.id === 'tiktok') return acc.platform === 'TIKTOK';
-          if (network.id === 'instagram') return acc.platform === 'INSTAGRAM';
-          if (network.id === 'youtube') return acc.platform === 'YOUTUBE';
+          if (network.id === 'instagram') return acc.platform === 'INSTAGRAM_REELS';
+          if (network.id === 'youtube') return acc.platform === 'YOUTUBE_SHORTS';
           if (network.id === 'twitter') return acc.platform === 'TWITTER';
           return false;
         })
