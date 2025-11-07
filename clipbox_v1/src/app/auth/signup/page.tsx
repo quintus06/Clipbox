@@ -2,14 +2,13 @@
 
 "use client";
 
-import { useState } from "react";
-import { Metadata } from "next";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { useSearchParams } from "next/navigation";
 
-export default function SignUpPage() {
+function SignUpContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [selectedRole, setSelectedRole] = useState<"CLIPPER" | "ADVERTISER" | null>(null);
@@ -135,5 +134,20 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <SignUpContent />
+    </Suspense>
   );
 }
