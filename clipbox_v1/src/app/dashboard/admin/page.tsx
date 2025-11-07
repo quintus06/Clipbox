@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   TrendingDown,
@@ -89,6 +90,7 @@ interface RecentActivity {
 }
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [timeRange, setTimeRange] = useState('7d');
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -283,17 +285,19 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     // Simuler le chargement des données
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const handleRefresh = () => {
     setIsLoading(true);
     setLastRefresh(new Date());
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 500);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -556,18 +560,18 @@ export default function AdminDashboardPage() {
                 </div>
                 <button
                   onClick={() => {
-                    // Redirection based on action type
+                    // Redirection based on action type using Next.js router
                     if (action.type === 'campaign') {
-                      window.location.href = '/dashboard/admin/campaigns?status=pending';
+                      router.push('/dashboard/admin/campaigns?status=pending');
                     } else if (action.type === 'withdrawal') {
-                      window.location.href = '/dashboard/admin/payments';
+                      router.push('/dashboard/admin/payments');
                     } else if (action.type === 'moderation') {
-                      window.location.href = '/dashboard/admin/moderation?type=videos';
+                      router.push('/dashboard/admin/moderation?type=videos');
                     } else if (action.type === 'kyc') {
-                      window.location.href = '/dashboard/admin/moderation?type=clippers';
+                      router.push('/dashboard/admin/moderation?type=clippers');
                     }
                   }}
-                  className="ml-4 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded-lg"
+                  className="ml-4 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30 rounded-lg transition-colors"
                 >
                   Traiter
                 </button>
@@ -583,8 +587,8 @@ export default function AdminDashboardPage() {
               Alertes système
             </h2>
             <button
-              onClick={() => window.location.href = '/dashboard/admin/system/alerts'}
-              className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+              onClick={() => router.push('/dashboard/admin/logs')}
+              className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
             >
               Tout voir →
             </button>

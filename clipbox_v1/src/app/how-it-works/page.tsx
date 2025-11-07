@@ -379,13 +379,13 @@ export default function HowItWorksPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center shadow-lg">
             <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 mb-2">
-              500+
+              150+
             </div>
             <p className="text-gray-600 dark:text-gray-400">Marques partenaires</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center shadow-lg">
             <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 mb-2">
-              2M€
+              250k€
             </div>
             <p className="text-gray-600 dark:text-gray-400">Versés aux créateurs</p>
           </div>

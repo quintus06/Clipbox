@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Clipbox - Boostez votre visibilité, monétisez vos clips",
-  description: "La plateforme qui connecte les marques aux créateurs de contenu pour des campagnes virales. Gagnez de l'argent en créant des clips pour les plus grandes marques.",
+  description: "La première plateforme qui connecte les annonceurs aux clippers pour créer des campagnes à haute viralité. Gagnez de l'argent en créant des clips pour les plus grandes marques.",
   keywords: "clipbox, créateur de contenu, influenceur, marketing d'influence, clips, tiktok, instagram, youtube, monétisation",
 };
 

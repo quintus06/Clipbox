@@ -82,8 +82,12 @@ enum NotificationType {
 
 enum Platform {
   TIKTOK
+  INSTAGRAM
   INSTAGRAM_REELS
+  FACEBOOK
+  YOUTUBE
   YOUTUBE_SHORTS
+  TWITTER
 }
 
 enum Language {

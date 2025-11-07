@@ -10,7 +10,7 @@ interface Clipper {
   name: string;
   username: string;
   avatar?: string;
-  totalEarnings: number;
+  totalViews: number;
   totalClips: number;
   rating: number;
   rank: number;
@@ -189,12 +189,12 @@ export default function TopClippers({ clippers: initialClippers, loading = false
                         </div>
                       </div>
 
-                      {/* Earnings */}
+                      {/* Views */}
                       <div className="text-right flex-shrink-0">
                         <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                          {clipper.totalEarnings.toLocaleString('fr-FR')}€
+                          {clipper.totalViews.toLocaleString('fr-FR')}
                         </div>
-                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">gains totaux</div>
+                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">vues totales</div>
                       </div>
                     </div>
 
@@ -280,11 +280,12 @@ export default function TopClippers({ clippers: initialClippers, loading = false
                         </p>
                       </div>
 
-                      {/* Earnings */}
+                      {/* Views */}
                       <div className="text-right flex-shrink-0">
                         <p className="font-bold text-sm sm:text-base text-gray-900 dark:text-white">
-                          {clipper.totalEarnings.toLocaleString('fr-FR')}€
+                          {clipper.totalViews.toLocaleString('fr-FR')}
                         </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">vues</p>
                       </div>
                     </Link>
                   ))}

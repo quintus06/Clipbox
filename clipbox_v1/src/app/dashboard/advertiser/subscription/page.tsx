@@ -42,6 +42,8 @@ export default function AdvertiserSubscriptionPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const currentPlan = {
     name: 'Business',
@@ -57,70 +59,87 @@ export default function AdvertiserSubscriptionPage() {
 
   const plans = [
     {
-      id: 'starter',
-      name: 'Starter',
-      price: { monthly: 59, yearly: 590 },
+      id: 'free',
+      name: 'Gratuit',
+      price: { monthly: 0, yearly: 0 },
       description: 'Pour tester ClipBox',
       color: 'gray',
       features: [
         { name: '5 campagnes max', included: true },
-        { name: 'Support prioritaire', included: true },
-        { name: 'Budget max 10K par mois', included: true },
-        { name: 'Retour analytics performances clippers toutes les 24h', included: true },
+        { name: 'Budget max 10k€ par mois', included: true },
+        { name: 'Support par email', included: true },
+        { name: 'Analytics de base', included: true },
         { name: 'Ciblage géographique', included: false },
-        { name: 'A/B testing', included: false },
-        { name: 'API access', included: false },
-        { name: 'Account manager dédié', included: false },
-        { name: 'Campagnes prioritaires', included: false },
-        { name: 'Formation personnalisée', included: false }
+        { name: 'Mise en avant des campagnes', included: false },
+        { name: 'Channel Discord dédié', included: false },
+        { name: 'Support prioritaire', included: false }
       ],
       limits: {
         campaigns: 5,
-        budget: '10K'
+        budget: '10k€'
+      }
+    },
+    {
+      id: 'starter',
+      name: 'Starter',
+      price: { monthly: 29, yearly: 290 },
+      description: 'Pour les petites entreprises',
+      color: 'blue',
+      features: [
+        { name: '10 campagnes max', included: true },
+        { name: 'Budget max 20k€ par mois', included: true },
+        { name: 'Ciblage géographique', included: true },
+        { name: 'Mise en avant des campagnes', included: true },
+        { name: 'Channel Discord dédié', included: true },
+        { name: 'Support prioritaire', included: true },
+        { name: 'Analytics détaillés', included: true },
+        { name: 'Retour analytics performances clippers toutes les 24h', included: true }
+      ],
+      limits: {
+        campaigns: 10,
+        budget: '20k€'
       }
     },
     {
       id: 'growth',
       name: 'Growth',
-      price: { monthly: 110, yearly: 1100 },
+      price: { monthly: 55, yearly: 550 },
       description: 'Pour les entreprises en croissance',
-      color: 'blue',
-      badge: null,
+      color: 'purple',
+      badge: 'Populaire',
       features: [
-        { name: '10 campagnes max', included: true },
+        { name: 'Campagnes illimitées', included: true },
+        { name: 'Budget illimité', included: true },
+        { name: 'Mise en avant des campagnes', included: true },
+        { name: 'Channel Discord dédié', included: true },
         { name: 'Support prioritaire', included: true },
-        { name: 'Budget max 30K par mois', included: true },
         { name: 'Retour analytics performances clippers en temps réel', included: true },
-        { name: 'Ciblage géographique', included: true },
-        { name: 'A/B testing basique', included: true },
-        { name: 'API access limité', included: false },
-        { name: 'Account manager dédié', included: false },
-        { name: 'Campagnes prioritaires', included: false },
-        { name: 'Formation personnalisée', included: false }
+        { name: 'Ciblage géographique avancé', included: true },
+        { name: 'Analytics avancés', included: true }
       ],
       limits: {
-        campaigns: 10,
-        budget: '30K'
+        campaigns: 'Illimité',
+        budget: 'Illimité'
       }
     },
     {
       id: 'business',
       name: 'Business',
-      price: { monthly: 199, yearly: 1990 },
-      description: 'Pour les marques établies',
-      color: 'purple',
-      badge: 'Populaire',
+      price: { monthly: 97, yearly: 970 },
+      description: 'Pour les grandes entreprises',
+      color: 'green',
       features: [
         { name: 'Campagnes illimitées', included: true },
-        { name: 'Réduction des frais de services (création de campagnes) à 10%', included: true },
-        { name: 'Support dédié 24/7', included: true },
         { name: 'Budget illimité', included: true },
+        { name: 'Channel Discord dédié', included: true },
+        { name: 'Mise en avant des campagnes', included: true },
+        { name: 'Accès contenu premium', included: true },
+        { name: 'Réduction des frais de services à 10%', included: true },
+        { name: 'Support dédié 24/7', included: true },
         { name: 'Retour analytics performances clippers en temps réel', included: true },
         { name: 'Ciblage avancé multi-critères', included: true },
-        { name: 'A/B testing avancé', included: true },
         { name: 'API access complet', included: true },
         { name: 'Account manager dédié', included: true },
-        { name: 'Campagnes prioritaires', included: true },
         { name: 'Formation personnalisée', included: true }
       ],
       limits: {
@@ -167,6 +186,26 @@ export default function AdvertiserSubscriptionPage() {
   const calculateSavings = (monthly: number, yearly: number) => {
     const yearlySavings = (monthly * 12) - yearly;
     return yearlySavings > 0 ? Math.round((yearlySavings / (monthly * 12)) * 100) : 0;
+  };
+
+  const handleConfirmPlanChange = async () => {
+    setIsProcessing(true);
+    try {
+      // Simuler un appel API pour changer le plan
+      // TODO: Remplacer par un vrai appel API quand le backend sera prêt
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      alert('Changement de plan confirmé avec succès! Votre nouveau plan sera actif immédiatement.');
+      setShowPaymentModal(false);
+      
+      // Recharger la page pour afficher les nouvelles informations
+      window.location.reload();
+    } catch (error) {
+      console.error('Error changing plan:', error);
+      alert('Erreur lors du changement de plan. Veuillez réessayer.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -295,18 +334,19 @@ export default function AdvertiserSubscriptionPage() {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-12 overflow-x-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 overflow-x-hidden">
         {plans.map((plan) => {
           const price = billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly / 12;
           const isCurrentPlan = plan.name === currentPlan.name;
           const savings = calculateSavings(plan.price.monthly, plan.price.yearly);
+          const showAllFeatures = expandedPlans[plan.id] || false;
           
           return (
             <div
               key={plan.id}
-              className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 transition-all hover:shadow-lg ${
+              className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 transition-all hover:shadow-lg flex flex-col ${
                 plan.id === 'business'
-                  ? 'border-purple-500 transform scale-105'
+                  ? 'border-purple-500'
                   : 'border-gray-200 dark:border-gray-700'
               }`}
             >
@@ -322,14 +362,18 @@ export default function AdvertiserSubscriptionPage() {
                 </div>
               )}
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {plan.description}
-                </p>
+              <div className="p-6 flex flex-col flex-1">
+                {/* Header Section */}
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 min-h-[40px]">
+                    {plan.description}
+                  </p>
+                </div>
                 
+                {/* Price Section */}
                 <div className="mb-4">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -337,11 +381,13 @@ export default function AdvertiserSubscriptionPage() {
                     </span>
                     <span className="text-gray-600 dark:text-gray-400">/mois</span>
                   </div>
-                  {billingCycle === 'yearly' && (
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                      Économisez {savings}% par an
-                    </p>
-                  )}
+                  <div className="min-h-[24px]">
+                    {billingCycle === 'yearly' && savings > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                        Économisez {savings}% par an
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Plan Limits */}
@@ -353,86 +399,62 @@ export default function AdvertiserSubscriptionPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Budget</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {typeof plan.limits.budget === 'number' ? `€${plan.limits.budget}` : `€${plan.limits.budget}`}
+                      {typeof plan.limits.budget === 'number' ? `€${plan.limits.budget}` : plan.limits.budget}
                     </span>
                   </div>
                 </div>
 
-                {isCurrentPlan ? (
-                  <button
-                    disabled
-                    className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg font-medium cursor-not-allowed"
-                  >
-                    Plan actuel
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleUpgrade(plan.id)}
-                    className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                      plan.id === 'business'
-                        ? 'bg-purple-600 text-white hover:bg-purple-700'
-                        : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
-                    }`}
-                  >
-                    Choisir ce plan
-                  </button>
-                )}
+                {/* Features List - Grows to fill space */}
+                <div className="flex-1 mb-4">
+                  <div className="space-y-2">
+                    {(showAllFeatures ? plan.features : plan.features.slice(0, 5)).map((feature, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        {feature.included ? (
+                          <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={`text-xs ${
+                          feature.included
+                            ? 'text-gray-700 dark:text-gray-300'
+                            : 'text-gray-400 dark:text-gray-600'
+                        }`}>
+                          {feature.name}
+                        </span>
+                      </div>
+                    ))}
+                    
+                    {plan.features.length > 5 && (
+                      <button
+                        onClick={() => setExpandedPlans(prev => ({ ...prev, [plan.id]: !prev[plan.id] }))}
+                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mt-2"
+                      >
+                        {showAllFeatures ? 'Voir moins' : 'Voir plus'}
+                        <ChevronRight className={`w-3 h-3 transition-transform ${showAllFeatures ? 'rotate-90' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                <div className="mt-4 space-y-2">
-                  {plan.features.slice(0, 5).map((feature, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      {feature.included ? (
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={`text-xs ${
-                        feature.included
-                          ? 'text-gray-700 dark:text-gray-300'
-                          : 'text-gray-400 dark:text-gray-600'
-                      }`}>
-                        {feature.name}
-                      </span>
-                    </div>
-                  ))}
-                  
-                  {plan.features.length > 5 && (
+                {/* Button at bottom */}
+                <div className="mt-auto">
+                  {isCurrentPlan ? (
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // Toggle showing all features
-                        const button = e.currentTarget;
-                        const parent = button.parentElement;
-                        const hiddenFeatures = plan.features.slice(5);
-                        
-                        if (button.textContent?.includes('Voir plus')) {
-                          // Show all features
-                          hiddenFeatures.forEach((feature, idx) => {
-                            const div = document.createElement('div');
-                            div.className = 'flex items-start gap-2';
-                            div.innerHTML = `
-                              ${feature.included ?
-                                '<svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
-                                '<svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
-                              }
-                              <span class="text-xs ${feature.included ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600'}">${feature.name}</span>
-                            `;
-                            parent?.insertBefore(div, button);
-                          });
-                          button.innerHTML = 'Voir moins <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>';
-                        } else {
-                          // Hide extra features
-                          const allDivs = parent?.querySelectorAll('div.flex');
-                          allDivs?.forEach((div, idx) => {
-                            if (idx >= 5) div.remove();
-                          });
-                          button.innerHTML = 'Voir plus <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
-                        }
-                      }}
-                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mt-2"
+                      disabled
+                      className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg font-medium cursor-not-allowed"
                     >
-                      Voir plus
-                      <ChevronRight className="w-3 h-3" />
+                      Plan actuel
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleUpgrade(plan.id)}
+                      className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                        plan.id === 'business'
+                          ? 'bg-purple-600 text-white hover:bg-purple-700'
+                          : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                      }`}
+                    >
+                      Choisir ce plan
                     </button>
                   )}
                 </div>
@@ -741,8 +763,12 @@ export default function AdvertiserSubscriptionPage() {
               >
                 Annuler
               </button>
-              <button className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                Confirmer le changement
+              <button
+                onClick={handleConfirmPlanChange}
+                disabled={isProcessing}
+                className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? 'Traitement en cours...' : 'Confirmer le changement'}
               </button>
             </div>
           </div>

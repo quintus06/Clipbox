@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import { 
-  Check, 
-  X, 
-  Star, 
-  Zap, 
+import {
+  Check,
+  X,
+  Star,
+  Zap,
   Crown,
   Shield,
   Users,
@@ -19,7 +19,8 @@ import {
   Award,
   TrendingUp,
   CreditCard,
-  Info
+  Info,
+  ChevronRight
 } from 'lucide-react';
 
 interface PlanFeature {
@@ -34,6 +35,7 @@ export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [userType, setUserType] = useState<'clipper' | 'advertiser'>('clipper');
+  const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({});
 
   // Prix pour les Clippers (depuis le dashboard)
   const clipperPrices = {
@@ -67,19 +69,19 @@ export default function PricingPage() {
       yearlyMonthly: 0
     },
     starter: {
-      monthly: 59,
-      yearly: Math.round(59 * 12 * 0.8),
-      yearlyMonthly: Math.round((59 * 12 * 0.8) / 12 * 100) / 100
+      monthly: 29,
+      yearly: Math.round(29 * 12 * 0.8),
+      yearlyMonthly: Math.round((29 * 12 * 0.8) / 12 * 100) / 100
     },
     growth: {
-      monthly: 110,
-      yearly: Math.round(110 * 12 * 0.8),
-      yearlyMonthly: Math.round((110 * 12 * 0.8) / 12 * 100) / 100
+      monthly: 55,
+      yearly: Math.round(55 * 12 * 0.8),
+      yearlyMonthly: Math.round((55 * 12 * 0.8) / 12 * 100) / 100
     },
     business: {
-      monthly: 199,
-      yearly: Math.round(199 * 12 * 0.8),
-      yearlyMonthly: Math.round((199 * 12 * 0.8) / 12 * 100) / 100
+      monthly: 97,
+      yearly: Math.round(97 * 12 * 0.8),
+      yearlyMonthly: Math.round((97 * 12 * 0.8) / 12 * 100) / 100
     }
   };
 
@@ -94,11 +96,11 @@ export default function PricingPage() {
       yearlyPrice: clipperPrices.free.yearly,
       color: 'gray',
       features: [
-        '1 campagne simultanée',
+        '5 campagnes en simultané',
         'Maximum 1 compte par réseau social',
-        'Maximum 2 vidéos par campagne',
-        'Commission de 20%',
-        'Retrait bi-mensuel',
+        'Maximum 4 vidéos par campagne',
+        'Commission de 15%',
+        'Retraits instantanés',
         'Support par email',
         'Statistiques de base',
         'Profil public basique'
@@ -119,11 +121,11 @@ export default function PricingPage() {
       yearlyPrice: clipperPrices.starter.yearly,
       color: 'blue',
       features: [
-        '3 campagnes simultanées',
+        '10 campagnes en simultané',
         'Maximum 2 comptes par réseau social',
         'Maximum 6 vidéos par campagne',
         'Commission réduite (15%)',
-        'Retrait hebdomadaire',
+        'Retraits instantanés',
         'Support par email et chat',
         'Statistiques détaillées',
         'Profil public personnalisé',
@@ -145,11 +147,11 @@ export default function PricingPage() {
       color: 'purple',
       popular: true,
       features: [
-        '8 campagnes simultanées',
-        'Campagnes illimitées au total',
-        'Maximum 4 comptes par réseau social',
+        'Campagnes illimitées',
+        'Maximum 2 comptes par réseau social',
         'Maximum 10 vidéos par campagne',
         'Commission réduite (10%)',
+        'Accès aux contenus premium',
         'Retraits instantanés',
         'Support prioritaire',
         'Analytics complets',
@@ -175,11 +177,10 @@ export default function PricingPage() {
         'Comptes illimités par réseau social',
         'Vidéos illimitées par campagne',
         'Commission minimale (5%)',
+        'Accès aux contenus premium',
         'Retraits instantanés',
         'Support prioritaire 24/7',
-        'Account manager dédié',
         'Analytics prédictifs avec IA',
-        'Page de marque personnalisée',
         'Accès VIP aux campagnes premium',
         'Badge Goat exclusif',
         'Tableau de bord personnalisé',
@@ -201,16 +202,16 @@ export default function PricingPage() {
       yearlyPrice: advertiserPrices.free.yearly,
       color: 'gray',
       features: [
-        '1 campagne max',
-        'Retour analytics tous les 3 jours',
-        '20 clippers max',
-        'Budget 2k€',
-        'Support mail'
+        '5 campagnes max',
+        'Budget max 10k€ par mois',
+        'Support par email',
+        'Analytics de base'
       ],
       limitations: [
-        'Pas de support prioritaire',
-        'Pas d\'exports de données',
-        'Analytics limités'
+        'Pas de ciblage géographique',
+        'Pas de mise en avant des campagnes',
+        'Pas de channel Discord dédié',
+        'Pas de support prioritaire'
       ]
     },
     {
@@ -222,17 +223,18 @@ export default function PricingPage() {
       yearlyPrice: advertiserPrices.starter.yearly,
       color: 'blue',
       features: [
-        '5 campagnes max',
+        '10 campagnes max',
+        'Budget max 20k€ par mois',
+        'Ciblage géographique',
+        'Mise en avant des campagnes',
+        'Channel Discord dédié',
         'Support prioritaire',
-        'Budget max 8K€ par mois',
-        'Retour analytics performances clippers toutes les 48h',
-        '30 clippers max',
-        'Analytics et rapports : basiques'
+        'Analytics détaillés',
+        'Retour analytics performances clippers toutes les 24h'
       ],
       limitations: [
-        'Pas d\'export de données analytics',
-        'Pas d\'accès beta',
-        'Pas d\'account manager'
+        'Pas de campagnes illimitées',
+        'Pas de budget illimité'
       ]
     },
     {
@@ -242,21 +244,21 @@ export default function PricingPage() {
       description: 'Pour les entreprises en croissance',
       price: billingPeriod === 'monthly' ? advertiserPrices.growth.monthly : advertiserPrices.growth.yearlyMonthly,
       yearlyPrice: advertiserPrices.growth.yearly,
-      color: 'green',
+      color: 'purple',
       popular: true,
       features: [
-        '10 campagnes max',
+        'Campagnes illimitées',
+        'Budget illimité',
+        'Mise en avant des campagnes',
+        'Channel Discord dédié',
         'Support prioritaire',
-        'Budget max 25k€ par mois',
-        'Retour analytics performances clippers en 24h',
-        'Clippers illimités',
-        'Analytics et rapports : avancés',
-        'Exports données analytics : CSV / PDF'
+        'Retour analytics performances clippers en temps réel',
+        'Ciblage géographique avancé',
+        'Analytics avancés'
       ],
       limitations: [
-        'Pas d\'accès beta',
-        'Pas d\'account manager',
-        'Frais de services standards'
+        'Pas d\'accès contenu premium',
+        'Pas d\'account manager dédié'
       ]
     },
     {
@@ -266,18 +268,20 @@ export default function PricingPage() {
       description: 'Pour les grandes entreprises',
       price: billingPeriod === 'monthly' ? advertiserPrices.business.monthly : advertiserPrices.business.yearlyMonthly,
       yearlyPrice: advertiserPrices.business.yearly,
-      color: 'purple',
+      color: 'green',
       features: [
         'Campagnes illimitées',
+        'Budget illimité',
+        'Channel Discord dédié',
+        'Mise en avant des campagnes',
+        'Accès contenu premium',
         'Réduction des frais de services à 10%',
         'Support dédié 24/7',
-        'Budget illimité',
         'Retour analytics performances clippers en temps réel',
-        'Clippers illimités',
-        'Analytics et rapports : complet avec IA',
-        'Exports données analytics : tout format',
-        'Accès beta',
-        'Account manager'
+        'Ciblage avancé multi-critères',
+        'API access complet',
+        'Account manager dédié',
+        'Formation personnalisée'
       ],
       limitations: []
     }
@@ -350,37 +354,48 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className={`grid grid-cols-1 ${userType === 'clipper' ? 'md:grid-cols-4' : 'md:grid-cols-4'} gap-8 mb-16`}>
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-all duration-200 ${
-                plan.popular ? 'ring-2 ring-green-500' : ''
-              }`}
-              onMouseEnter={() => setSelectedPlan(plan.id)}
-              onMouseLeave={() => setSelectedPlan(null)}
-            >
+          {plans.map((plan) => {
+            const showAllFeatures = expandedPlans[plan.id] || false;
+            const displayFeatures = showAllFeatures ? plan.features : plan.features.slice(0, 6);
+            const displayLimitations = showAllFeatures ? plan.limitations : plan.limitations.slice(0, 2);
+            
+            return (
+              <div
+                key={plan.id}
+                className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-200 flex flex-col ${
+                  plan.popular ? 'ring-2 ring-green-500' : ''
+                }`}
+                onMouseEnter={() => setSelectedPlan(plan.id)}
+                onMouseLeave={() => setSelectedPlan(null)}
+              >
               {plan.popular && (
                 <div className="absolute top-0 right-0 bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-1 rounded-bl-lg text-sm font-semibold">
                   Plus populaire
                 </div>
               )}
 
-              <div className="p-8">
-                <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br ${
-                  plan.color === 'blue' ? 'from-blue-400 to-blue-600' :
-                  plan.color === 'green' ? 'from-green-400 to-green-600' :
-                  'from-purple-400 to-purple-600'
-                } flex items-center justify-center text-white`}>
-                  {plan.icon}
+              <div className="p-8 flex flex-col flex-1">
+                {/* Icon and Title Section */}
+                <div className="mb-6">
+                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br ${
+                    plan.color === 'blue' ? 'from-blue-400 to-blue-600' :
+                    plan.color === 'green' ? 'from-green-400 to-green-600' :
+                    plan.color === 'purple' ? 'from-purple-400 to-purple-600' :
+                    plan.color === 'yellow' ? 'from-yellow-400 to-yellow-600' :
+                    'from-gray-400 to-gray-600'
+                  } flex items-center justify-center text-white`}>
+                    {plan.icon}
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-center min-h-[48px]">
+                    {plan.description}
+                  </p>
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                  {plan.name}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-                  {plan.description}
-                </p>
-
+                {/* Price Section */}
                 <div className="text-center mb-6">
                   <div className="flex items-end justify-center">
                     <span className="text-4xl font-bold text-gray-900 dark:text-white">
@@ -390,45 +405,64 @@ export default function PricingPage() {
                       /mois
                     </span>
                   </div>
-                  {billingPeriod === 'yearly' && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      Facturé {plan.yearlyPrice}€ par an
-                    </p>
+                  <div className="min-h-[24px]">
+                    {billingPeriod === 'yearly' && plan.yearlyPrice > 0 && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Facturé {plan.yearlyPrice}€ par an
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Features List - Grows to fill space */}
+                <div className="flex-1 mb-6">
+                  <ul className="space-y-3">
+                    {displayFeatures.map((feature, index) => (
+                      <li key={`feature-${index}`} className="flex items-start">
+                        <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                    {displayLimitations.map((limitation, index) => (
+                      <li key={`limitation-${index}`} className="flex items-start opacity-60">
+                        <X className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-500 dark:text-gray-500 text-sm line-through">
+                          {limitation}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {(plan.features.length > 6 || plan.limitations.length > 2) && (
+                    <button
+                      onClick={() => setExpandedPlans(prev => ({ ...prev, [plan.id]: !prev[plan.id] }))}
+                      className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mt-4"
+                    >
+                      {showAllFeatures ? 'Voir moins' : 'Voir toutes les fonctionnalités'}
+                      <ChevronRight className={`w-3 h-3 transition-transform ${showAllFeatures ? 'rotate-90' : ''}`} />
+                    </button>
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 dark:text-gray-300 text-sm">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                  {plan.limitations.map((limitation, index) => (
-                    <li key={index} className="flex items-start opacity-60">
-                      <X className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 dark:text-gray-500 text-sm line-through">
-                        {limitation}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={`/auth/signup?plan=${plan.id}`}
-                  className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                    plan.popular
-                      ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white hover:shadow-lg transform hover:scale-105'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Commencer avec {plan.name}
-                </Link>
+                {/* Button at bottom */}
+                <div className="mt-auto">
+                  <Link
+                    href={`/auth/signup?plan=${plan.id}`}
+                    className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                      plan.popular
+                        ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white hover:shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Commencer avec {plan.name}
+                  </Link>
+                </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
 

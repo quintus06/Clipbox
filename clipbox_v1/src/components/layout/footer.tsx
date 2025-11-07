@@ -30,7 +30,8 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-600 dark:text-gray-400">
-              La plateforme qui connecte les marques aux créateurs de contenu pour des campagnes virales.
+              La première plateforme qui connecte les annonceurs aux clippers pour créer des campagnes à haute viralité 
+              
             </p>
             <div className="flex space-x-4">
               <a

@@ -75,20 +75,21 @@ const recentCampaigns = [
 ];
 
 export default function AdvertiserDashboard() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    totalCampaigns: 8,
-    activeCampaigns: 3,
-    totalViews: 450000,
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    totalViews: 0,
     totalWatchTime: 125000, // en minutes
     totalBalance: 5000,
     availableBalance: 3500,
     lockedBalance: 1500,
-    totalSpent: 12500,
+    totalSpent: 0,
     averageROI: 3.2,
-    totalSubmissions: 156,
-    approvedSubmissions: 142,
-    rejectedSubmissions: 14,
+    totalSubmissions: 0,
+    approvedSubmissions: 0,
+    rejectedSubmissions: 0,
   });
 
   useEffect(() => {
@@ -98,13 +99,42 @@ export default function AdvertiserDashboard() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // const response = await fetch('/api/advertiser/stats');
-      // const data = await response.json();
-      // setStats(data);
+      // Fetch campaigns
+      const campaignsResponse = await fetch('/api/advertiser/campaigns');
+      if (campaignsResponse.ok) {
+        const campaignsData = await campaignsResponse.json();
+        
+        // Transform data to match expected format
+        const transformedCampaigns = campaignsData.slice(0, 3).map((campaign: any) => ({
+          id: campaign.id,
+          title: campaign.title,
+          status: campaign.status,
+          budget: Number(campaign.budget),
+          remainingBudget: Number(campaign.remainingBudget),
+          submissions: campaign.totalSubmissions || 0,
+          approvedSubmissions: campaign.approvedSubmissions || 0,
+          totalViews: campaign.totalViews || 0,
+          platform: campaign.targetPlatforms?.[0] || 'TIKTOK',
+          endDate: new Date(campaign.endDate),
+        }));
+        
+        setCampaigns(transformedCampaigns);
+        
+        // Calculate stats from campaigns
+        setStats(prev => ({
+          ...prev,
+          totalCampaigns: campaignsData.length,
+          activeCampaigns: campaignsData.filter((c: any) => c.status === 'ACTIVE').length,
+          totalViews: campaignsData.reduce((sum: number, c: any) => sum + (c.totalViews || 0), 0),
+          totalSpent: campaignsData.reduce((sum: number, c: any) => sum + (Number(c.budget) - Number(c.remainingBudget)), 0),
+          totalSubmissions: campaignsData.reduce((sum: number, c: any) => sum + (c.totalSubmissions || 0), 0),
+          approvedSubmissions: campaignsData.reduce((sum: number, c: any) => sum + (c.approvedSubmissions || 0), 0),
+        }));
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Fallback to mock data
+      setCampaigns(recentCampaigns);
     } finally {
       setIsLoading(false);
     }
@@ -343,9 +373,21 @@ export default function AdvertiserDashboard() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-          {recentCampaigns.map((campaign) => (
-            <CampaignCard key={campaign.id} campaign={campaign} />
-          ))}
+          {campaigns.length > 0 ? (
+            campaigns.map((campaign) => (
+              <CampaignCard key={campaign.id} campaign={campaign} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+              <p>Aucune campagne récente</p>
+              <Link
+                href="/dashboard/advertiser/campaigns/new"
+                className="inline-block mt-4 text-orange-600 dark:text-orange-400 hover:underline"
+              >
+                Créer votre première campagne →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

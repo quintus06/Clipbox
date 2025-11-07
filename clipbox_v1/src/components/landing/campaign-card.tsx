@@ -16,6 +16,7 @@ interface CampaignCardProps {
   endDate: Date;
   advertiserName: string;
   advertiserLogo?: string;
+  cpm?: number;
 }
 
 export default function CampaignCard({
@@ -30,6 +31,7 @@ export default function CampaignCard({
   endDate,
   advertiserName,
   advertiserLogo,
+  cpm,
 }: CampaignCardProps) {
   const progressPercentage = (budgetSpent / budget) * 100;
   const remainingBudget = budget - budgetSpent;
@@ -128,6 +130,24 @@ export default function CampaignCard({
               </span>
             </div>
           </div>
+
+          {/* CPM Display */}
+          {cpm && (
+            <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  <span className="font-medium">CPM</span>
+                </div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  €{cpm}
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                pour 1000 vues
+              </div>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">

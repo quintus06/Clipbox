@@ -29,7 +29,7 @@ export default function HeroSection() {
             }`}
           >
             <TrendingUp className="w-4 h-4 mr-2" />
-            Plus de 10,000 créateurs actifs
+            Plus de 1000 créateurs actifs
           </div>
 
           {/* Main Heading */}
@@ -51,8 +51,8 @@ export default function HeroSection() {
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            Connectez-vous avec les plus grandes marques et transformez votre créativité en revenus. 
-            Rejoignez la plateforme leader du marketing d'influence vidéo.
+            Connectez-vous avec les plus grandes marques et influenceurs pour transformer votre créativité en revenus. Clipbox relie ceux qui créent la visibilité et ceux qui en ont besoin.
+
           </p>
 
           {/* CTA Buttons */}
@@ -83,21 +83,21 @@ export default function HeroSection() {
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Users className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-2" />
-                <span className="text-3xl font-bold text-gray-900 dark:text-white">10K+</span>
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">1000+</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400">Créateurs actifs</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400 mr-2" />
-                <span className="text-3xl font-bold text-gray-900 dark:text-white">500+</span>
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">160+</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400">Campagnes lancées</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400 mr-2" />
-                <span className="text-3xl font-bold text-gray-900 dark:text-white">2M€+</span>
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">250k€+</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400">Distribués aux créateurs</p>
             </div>

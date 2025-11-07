@@ -1,6 +1,4 @@
 // src/components/auth/oauth-buttons.tsx
-// NOTE: OAuth authentication is currently disabled as we're using a custom JWT authentication system
-
 "use client";
 
 import { useState } from "react";
@@ -14,8 +12,21 @@ export function OAuthButtons({ callbackUrl = "/dashboard" }: OAuthButtonsProps) 
   const [error, setError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
-    // OAuth is currently disabled - using custom JWT authentication
-    setError("L'authentification Google n'est pas disponible pour le moment. Veuillez utiliser votre email et mot de passe.");
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Redirect to Google OAuth authorize endpoint
+      const params = new URLSearchParams({
+        callbackUrl: callbackUrl,
+      });
+      
+      window.location.href = `/api/auth/google/authorize?${params.toString()}`;
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setError("Erreur lors de la connexion avec Google. Veuillez réessayer.");
+      setIsLoading(false);
+    }
   };
 
   return (

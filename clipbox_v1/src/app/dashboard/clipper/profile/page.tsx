@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  User, 
+import { useRouter } from 'next/navigation';
+import {
+  User,
   Camera,
   Trophy,
   Star,
@@ -27,12 +28,22 @@ import {
   MessageCircle,
   Share2,
   DollarSign,
-  Zap
+  Zap,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 
 export default function ClipperProfilePage() {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
+  // KYC status (this would come from API/context)
+  const [kycStatus, setKycStatus] = useState<'pending' | 'verified' | 'rejected' | 'not_submitted'>('not_submitted');
   
   const [profile, setProfile] = useState({
     username: '@jeandupont',
@@ -294,6 +305,92 @@ export default function ClipperProfilePage() {
                 <Eye className="w-5 h-5 text-gray-400" />
               </a>
             </div>
+          </div>
+
+          {/* KYC Status Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Vérification KYC
+              </h2>
+              <FileText className="w-5 h-5 text-gray-400" />
+            </div>
+            
+            <div className={`p-4 rounded-lg border-2 mb-4 ${
+              kycStatus === 'verified'
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                : kycStatus === 'rejected'
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                : kycStatus === 'pending'
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'
+            }`}>
+              <div className="flex items-center gap-3">
+                {kycStatus === 'verified' ? (
+                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : kycStatus === 'rejected' ? (
+                  <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+                ) : kycStatus === 'pending' ? (
+                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-6 h-6 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                )}
+                <div className="flex-1">
+                  <p className={`font-medium text-sm ${
+                    kycStatus === 'verified'
+                      ? 'text-green-900 dark:text-green-100'
+                      : kycStatus === 'rejected'
+                      ? 'text-red-900 dark:text-red-100'
+                      : kycStatus === 'pending'
+                      ? 'text-yellow-900 dark:text-yellow-100'
+                      : 'text-gray-900 dark:text-gray-100'
+                  }`}>
+                    {kycStatus === 'verified'
+                      ? 'Identité vérifiée'
+                      : kycStatus === 'rejected'
+                      ? 'Vérification rejetée'
+                      : kycStatus === 'pending'
+                      ? 'En attente de vérification'
+                      : 'Non vérifié'}
+                  </p>
+                  <p className={`text-xs mt-0.5 ${
+                    kycStatus === 'verified'
+                      ? 'text-green-700 dark:text-green-300'
+                      : kycStatus === 'rejected'
+                      ? 'text-red-700 dark:text-red-300'
+                      : kycStatus === 'pending'
+                      ? 'text-yellow-700 dark:text-yellow-300'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {kycStatus === 'verified'
+                      ? 'Votre identité a été vérifiée avec succès'
+                      : kycStatus === 'rejected'
+                      ? 'Veuillez soumettre de nouveaux documents'
+                      : kycStatus === 'pending'
+                      ? 'Vérification en cours (24-48h)'
+                      : 'Vérifiez votre identité pour débloquer toutes les fonctionnalités'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {kycStatus !== 'verified' && (
+              <button
+                onClick={() => router.push('/dashboard/clipper/settings?tab=kyc')}
+                className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <FileText className="w-5 h-5" />
+                {kycStatus === 'not_submitted' ? 'Faire valider mon identité' : 'Voir le statut KYC'}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {kycStatus === 'verified' && (
+              <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <Check className="w-4 h-4" />
+                <span>Compte vérifié</span>
+              </div>
+            )}
           </div>
 
           {/* Performance Stats */}

@@ -18,12 +18,12 @@ interface StatsSectionProps {
 
 export default function StatsSection({ 
   stats = {
-    totalCampaigns: 500,
-    activeClippers: 10000,
-    totalDistributed: 2000000,
-    totalClips: 50000,
-    averageEarnings: 200,
-    countries: 15
+    totalCampaigns: 160,
+    activeClippers: 1000,
+    totalDistributed: 250000,
+    totalClips: 8500,
+    averageEarnings: 29,
+    countries: 2
   }
 }: StatsSectionProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -214,7 +214,7 @@ export default function StatsSection({
                 Prêt à rejoindre l'aventure ?
               </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Commencez à gagner de l'argent avec vos clips dès aujourd'hui
+                Créez votre première campagnes gratuitement et amplifiez les performances de vos campagnes dès aujourd’hui
               </p>
             </div>
             <a

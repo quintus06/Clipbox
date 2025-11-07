@@ -14,21 +14,27 @@ import {
   Target,
   AlertCircle,
   Check,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 
 interface CampaignFormData {
   title: string;
+  type: 'UGC' | 'CLIP';
+  category: 'MARQUE_PERSONNEL' | 'DIVERTISSEMENT' | 'PRODUIT' | 'MUSIQUE' | '';
   description: string;
   requirements: string;
-  videoUrl: string;
-  platform: 'TIKTOK' | 'INSTAGRAM' | 'YOUTUBE';
+  contentRequirements: string[];
+  contentUrls: string[];
+  platforms: ('TIKTOK' | 'INSTAGRAM' | 'YOUTUBE' | 'X')[];
   budget: number;
   paymentRatio: number;
+  maxPaymentPerClip: number;
+  submissionBonus: number;
   duration: number; // in months
   targetCountries: string[];
   targetLanguages: string[];
-  maxClippers: number;
+  thumbnail: File | null;
 }
 
 export default function NewCampaignPage() {
@@ -39,16 +45,21 @@ export default function NewCampaignPage() {
   
   const [formData, setFormData] = useState<CampaignFormData>({
     title: '',
+    type: 'UGC',
+    category: '',
     description: '',
     requirements: '',
-    videoUrl: '',
-    platform: 'TIKTOK',
+    contentRequirements: [],
+    contentUrls: [''],
+    platforms: [],
     budget: 400,
     paymentRatio: 0.10,
+    maxPaymentPerClip: 0,
+    submissionBonus: 0,
     duration: 2,
     targetCountries: [],
     targetLanguages: [],
-    maxClippers: 50
+    thumbnail: null
   });
 
   const steps = [
@@ -86,11 +97,14 @@ export default function NewCampaignPage() {
     switch (step) {
       case 1:
         if (!formData.title) newErrors.title = 'Le titre est requis';
+        if (!formData.category) newErrors.category = 'La catégorie est requise';
         if (!formData.description) newErrors.description = 'La description est requise';
         if (!formData.requirements) newErrors.requirements = 'Les requirements sont requis';
-        if (!formData.videoUrl) newErrors.videoUrl = 'L\'URL de la vidéo est requise';
-        else if (!formData.videoUrl.includes('youtube.com') && !formData.videoUrl.includes('youtu.be')) {
-          newErrors.videoUrl = 'L\'URL doit être une vidéo YouTube valide';
+        if (formData.contentUrls.length === 0 || formData.contentUrls.every(url => !url.trim())) {
+          newErrors.contentUrls = 'Au moins une URL de contenu est requise';
+        }
+        if (formData.platforms.length === 0) {
+          newErrors.platforms = 'Sélectionnez au moins une plateforme';
         }
         break;
       case 2:
@@ -108,8 +122,11 @@ export default function NewCampaignPage() {
         if (formData.duration < 2) {
           newErrors.duration = 'La durée minimum est de 2 mois';
         }
-        if (formData.paymentRatio < 0.10 || formData.paymentRatio > 100) {
-          newErrors.paymentRatio = 'Le montant doit être entre 0.10€ et 100€ par 1000 vues';
+        if (formData.paymentRatio <= 0) {
+          newErrors.paymentRatio = 'Le ratio de paiement doit être supérieur à 0';
+        }
+        if (formData.paymentRatio > 100) {
+          newErrors.paymentRatio = 'Le ratio de paiement ne peut pas dépasser 100€';
         }
         break;
     }
@@ -261,6 +278,52 @@ export default function NewCampaignPage() {
 
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                Type *
+              </label>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {['UGC', 'CLIP'].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: type as 'UGC' | 'CLIP' })}
+                    className={`
+                      px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 font-medium text-xs sm:text-sm transition-colors
+                      ${formData.type === type
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                      }
+                    `}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                Catégorie *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                className={`w-full px-3 sm:px-4 py-2 text-sm sm:text-base border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.category ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              >
+                <option value="">Sélectionnez une catégorie</option>
+                <option value="MARQUE_PERSONNEL">Marque personnel</option>
+                <option value="DIVERTISSEMENT">Divertissement</option>
+                <option value="PRODUIT">Produit</option>
+                <option value="MUSIQUE">Musique</option>
+              </select>
+              {errors.category && (
+                <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.category}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                 Description *
               </label>
               <textarea
@@ -297,35 +360,111 @@ export default function NewCampaignPage() {
 
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                URL de la vidéo YouTube *
+                Exigences en matière de contenu
               </label>
-              <input
-                type="url"
-                value={formData.videoUrl}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                className={`w-full px-3 sm:px-4 py-2 text-sm sm:text-base border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                  errors.videoUrl ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              {errors.videoUrl && (
-                <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.videoUrl}</p>
+              <div className="space-y-2">
+                {formData.contentRequirements.map((req, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={req}
+                      onChange={(e) => {
+                        const newReqs = [...formData.contentRequirements];
+                        newReqs[index] = e.target.value;
+                        setFormData({ ...formData, contentRequirements: newReqs });
+                      }}
+                      className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Ex: Durée minimum 30 secondes"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newReqs = formData.contentRequirements.filter((_, i) => i !== index);
+                        setFormData({ ...formData, contentRequirements: newReqs });
+                      }}
+                      className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, contentRequirements: [...formData.contentRequirements, ''] })}
+                  className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter une exigence
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                Contenu disponible *
+              </label>
+              <div className="space-y-2">
+                {formData.contentUrls.map((url, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="url"
+                      value={url}
+                      onChange={(e) => {
+                        const newUrls = [...formData.contentUrls];
+                        newUrls[index] = e.target.value;
+                        setFormData({ ...formData, contentUrls: newUrls });
+                      }}
+                      className={`flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                        errors.contentUrls ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
+                      placeholder="https://drive.google.com/... ou autre lien"
+                    />
+                    {formData.contentUrls.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newUrls = formData.contentUrls.filter((_, i) => i !== index);
+                          setFormData({ ...formData, contentUrls: newUrls });
+                        }}
+                        className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, contentUrls: [...formData.contentUrls, ''] })}
+                  className="flex items-center gap-2 px-3 py-2 text-xs sm:text-sm text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter une URL
+                </button>
+              </div>
+              {errors.contentUrls && (
+                <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.contentUrls}</p>
               )}
             </div>
 
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                Plateforme cible *
+                Plateformes cibles *
               </label>
-              <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 sm:gap-3">
-                {['TIKTOK', 'INSTAGRAM', 'YOUTUBE'].map((platform) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                {['TIKTOK', 'INSTAGRAM', 'YOUTUBE', 'X'].map((platform) => (
                   <button
                     key={platform}
                     type="button"
-                    onClick={() => setFormData({ ...formData, platform: platform as any })}
+                    onClick={() => {
+                      const platforms = formData.platforms.includes(platform as any)
+                        ? formData.platforms.filter(p => p !== platform)
+                        : [...formData.platforms, platform as any];
+                      setFormData({ ...formData, platforms });
+                    }}
                     className={`
                       px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 font-medium text-xs sm:text-sm transition-colors
-                      ${formData.platform === platform
+                      ${formData.platforms.includes(platform as any)
                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                       }
@@ -335,6 +474,27 @@ export default function NewCampaignPage() {
                   </button>
                 ))}
               </div>
+              {errors.platforms && (
+                <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.platforms}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                Télécharger la vignette
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setFormData({ ...formData, thumbnail: file });
+                }}
+                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Formats acceptés: JPG, PNG, GIF, etc.
+              </p>
             </div>
           </div>
         )}
@@ -424,18 +584,6 @@ export default function NewCampaignPage() {
               )}
             </div>
 
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                Nombre max de clippers
-              </label>
-              <input
-                type="number"
-                value={formData.maxClippers}
-                onChange={(e) => setFormData({ ...formData, maxClippers: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                min="1"
-              />
-            </div>
           </div>
         )}
 
@@ -472,25 +620,40 @@ export default function NewCampaignPage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Ratio de paiement (€/1000 vues) *
               </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  value={formData.paymentRatio}
-                  onChange={(e) => setFormData({ ...formData, paymentRatio: parseFloat(e.target.value) })}
-                  className="flex-1"
-                  min="0.10"
-                  max="100"
-                  step="0.05"
-                />
-                <span className="text-lg font-semibold text-gray-900 dark:text-white w-24 text-right">
-                  {formatCurrency(formData.paymentRatio)}
-                </span>
-              </div>
+              <input
+                type="number"
+                value={formData.paymentRatio}
+                onChange={(e) => setFormData({ ...formData, paymentRatio: parseFloat(e.target.value) || 0 })}
+                className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.paymentRatio ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+                min="0.01"
+                step="0.01"
+                placeholder="0.10"
+              />
               {errors.paymentRatio && (
                 <p className="mt-1 text-sm text-red-500">{errors.paymentRatio}</p>
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Montant payé aux clippers pour 1000 vues (85% du budget après frais)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Maximum de paiement par clip (€)
+              </label>
+              <input
+                type="number"
+                value={formData.maxPaymentPerClip}
+                onChange={(e) => setFormData({ ...formData, maxPaymentPerClip: parseFloat(e.target.value) || 0 })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                min="0"
+                step="0.50"
+                placeholder="0.00"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Montant maximum payé par clip individuel (optionnel, laisser à 0 pour aucune limite)
               </p>
             </div>
 
@@ -512,6 +675,23 @@ export default function NewCampaignPage() {
               )}
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Durée minimum : 2 mois
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Bonus pour soumission (€)
+              </label>
+              <input
+                type="number"
+                value={formData.submissionBonus}
+                onChange={(e) => setFormData({ ...formData, submissionBonus: parseFloat(e.target.value) || 0 })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                min="0"
+                step="0.50"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Montant bonus versé aux clippers pour chaque soumission acceptée
               </p>
             </div>
 
@@ -567,10 +747,31 @@ export default function NewCampaignPage() {
                   Informations de base
                 </h3>
                 <p className="font-medium text-gray-900 dark:text-white">{formData.title}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Type : <span className="font-medium">{formData.type}</span>
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Catégorie : <span className="font-medium">
+                    {formData.category === 'MARQUE_PERSONNEL' ? 'Marque personnel' :
+                     formData.category === 'DIVERTISSEMENT' ? 'Divertissement' :
+                     formData.category === 'PRODUIT' ? 'Produit' :
+                     formData.category === 'MUSIQUE' ? 'Musique' : ''}
+                  </span>
+                </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{formData.description}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  Plateforme : <span className="font-medium">{formData.platform}</span>
+                  Plateformes : <span className="font-medium">{formData.platforms.join(', ')}</span>
                 </p>
+                {formData.contentUrls.filter(url => url.trim()).length > 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Contenu disponible : <span className="font-medium">{formData.contentUrls.filter(url => url.trim()).length} URL(s)</span>
+                  </p>
+                )}
+                {formData.thumbnail && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Vignette : <span className="font-medium">{formData.thumbnail.name}</span>
+                  </p>
+                )}
               </div>
 
               <div>
@@ -582,9 +783,6 @@ export default function NewCampaignPage() {
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Langues : {formData.targetLanguages.join(', ')}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Max clippers : {formData.maxClippers}
                 </p>
               </div>
 
@@ -601,6 +799,16 @@ export default function NewCampaignPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Coût par 1000 vues : <span className="font-medium">{formatCurrency(formData.paymentRatio)}</span>
                 </p>
+                {formData.maxPaymentPerClip > 0 && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Maximum par clip : <span className="font-medium">{formatCurrency(formData.maxPaymentPerClip)}</span>
+                  </p>
+                )}
+                {formData.submissionBonus > 0 && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Bonus pour soumission : <span className="font-medium">{formatCurrency(formData.submissionBonus)}</span>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -614,6 +822,21 @@ export default function NewCampaignPage() {
                   <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
                     Votre campagne sera soumise à validation par notre équipe avant d'être publiée.
                     Ce processus prend généralement 24 à 48 heures.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Legal Disclaimer */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                    Conditions d'utilisation
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
+                    En créant cette campagne de rémunération vous garantissez les droits d'usage de vos contenus aux clippers afin qu'ils puissent vous soumettre des vidéos et vous confirmez agréer à nos conditions d'utilisation.
                   </p>
                 </div>
               </div>

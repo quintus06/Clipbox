@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok OAuth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .url-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin: 20px 0;
+        }
+        button {
+            background: #000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #333;
+        }
+        .param {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>TikTok OAuth URL Test</h1>
+    
+    <div class="url-box">
+        <h3>Full Authorization URL:</h3>
+        <div id="fullUrl"></div>
+    </div>
+
+    <div class="url-box">
+        <h3>Parameters:</h3>
+        <div id="params"></div>
+    </div>
+
+    <button onclick="testOAuth()">Test TikTok OAuth</button>
+
+    <script>
+        const clientKey = 'awqvj59mu1zomrxp';
+        const redirectUri = 'http://localhost:3000/api/auth/tiktok/callback';
+        const scope = 'user.info.basic,video.list';
+        const state = 'test_' + Math.random().toString(36).substring(7);
+
+        const params = new URLSearchParams({
+            client_key: clientKey,
+            response_type: 'code',
+            scope: scope,
+            redirect_uri: redirectUri,
+            state: state
+        });
+
+        const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
+
+        document.getElementById('fullUrl').textContent = authUrl;
+
+        const paramsDiv = document.getElementById('params');
+        params.forEach((value, key) => {
+            const paramDiv = document.createElement('div');
+            paramDiv.className = 'param';
+            paramDiv.innerHTML = `<strong>${key}:</strong> ${value}`;
+            paramsDiv.appendChild(paramDiv);
+        });
+
+        function testOAuth() {
+            window.location.href = authUrl;
+        }
+    </script>
+</body>
+</html>

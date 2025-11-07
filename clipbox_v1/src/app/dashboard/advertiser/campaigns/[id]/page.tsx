@@ -65,6 +65,12 @@ interface Campaign {
   rejectedSubmissions: number;
 }
 
+interface Balance {
+  available: number;
+  pending: number;
+  withdrawn: number;
+}
+
 // Mock data
 const mockCampaign: Campaign = {
   id: '1',
@@ -157,9 +163,16 @@ export default function CampaignDetailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState('');
+  const [balance, setBalance] = useState<Balance | null>(null);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [newBudget, setNewBudget] = useState('');
+  const [budgetError, setBudgetError] = useState('');
 
   useEffect(() => {
     fetchCampaignData();
+    fetchBalance();
   }, [params.id]);
 
   useEffect(() => {
@@ -182,6 +195,18 @@ export default function CampaignDetailPage() {
     }
   };
 
+  const fetchBalance = async () => {
+    try {
+      const response = await fetch('/api/advertiser/balance');
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data.balance);
+      }
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+    }
+  };
+
   const filterSubmissions = () => {
     let filtered = [...submissions];
     if (statusFilter !== 'ALL') {
@@ -190,32 +215,154 @@ export default function CampaignDetailPage() {
     setFilteredSubmissions(filtered);
   };
 
-  const handleApproveSubmission = async (submissionId: string) => {
+  const handleIncreaseBudget = async () => {
+    // Reset errors
+    setBudgetError('');
+    
+    // Validate input
+    const budgetValue = parseFloat(newBudget);
+    if (isNaN(budgetValue) || budgetValue <= 0) {
+      setBudgetError('Veuillez entrer un montant valide');
+      return;
+    }
+
+    if (budgetValue <= campaign.budget) {
+      setBudgetError('Le nouveau budget doit être supérieur au budget actuel');
+      return;
+    }
+
+    const budgetIncrease = budgetValue - campaign.budget;
+
+    // Check balance
+    if (!balance || balance.available < budgetIncrease) {
+      const shortfall = budgetIncrease - (balance?.available || 0);
+      setBudgetError(
+        `Fonds insuffisants. Votre solde actuel est de ${(balance?.available || 0).toFixed(2)}€. ` +
+        `Vous avez besoin de ${budgetIncrease.toFixed(2)}€ supplémentaires. ` +
+        `Il vous manque ${shortfall.toFixed(2)}€. Veuillez recharger votre compte.`
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSubmissions(submissions.map(s => 
+      const response = await fetch(`/api/advertiser/campaigns/${params.id}/increase-budget`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newBudget: budgetValue })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Erreur lors de l\'augmentation du budget');
+      }
+
+      // Update local state
+      setCampaign({
+        ...campaign,
+        budget: budgetValue,
+        remainingBudget: campaign.remainingBudget + budgetIncrease
+      });
+
+      // Update balance
+      if (balance) {
+        setBalance({
+          ...balance,
+          available: balance.available - budgetIncrease,
+          pending: balance.pending + budgetIncrease
+        });
+      }
+
+      // Close modal and show success
+      setShowBudgetModal(false);
+      setNewBudget('');
+      alert(data.message || `Budget augmenté de ${budgetIncrease.toFixed(2)}€ avec succès!`);
+    } catch (error) {
+      console.error('Error increasing budget:', error);
+      setBudgetError(error instanceof Error ? error.message : 'Erreur lors de l\'augmentation du budget');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleApproveSubmission = async (submissionId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir approuver cette soumission ?')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/advertiser/submissions/${submissionId}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to approve submission');
+      }
+      
+      // Update local state
+      setSubmissions(submissions.map(s =>
         s.id === submissionId ? { ...s, status: 'APPROVED' as const } : s
       ));
-      setShowReviewModal(false);
-      setSelectedSubmission(null);
+      
+      // Show success message
+      alert(data.message || 'Soumission approuvée avec succès !');
     } catch (error) {
       console.error('Error approving submission:', error);
+      alert(error instanceof Error ? error.message : 'Erreur lors de l\'approbation de la soumission. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRejectSubmission = async (submissionId: string) => {
+    // Validate rejection reason
+    if (!reviewNote.trim()) {
+      setValidationError('Le motif du rejet est obligatoire');
+      return;
+    }
+    
+    if (reviewNote.trim().length < 10) {
+      setValidationError('Le motif doit contenir au moins 10 caractères');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setValidationError('');
+    
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSubmissions(submissions.map(s => 
+      const response = await fetch(`/api/advertiser/submissions/${submissionId}/reject`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerNotes: reviewNote })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reject submission');
+      }
+      
+      // Update local state
+      setSubmissions(submissions.map(s =>
         s.id === submissionId ? { ...s, status: 'REJECTED' as const, reviewNote } : s
       ));
+      
       setShowReviewModal(false);
       setSelectedSubmission(null);
       setReviewNote('');
+      
+      // Show success message
+      alert(data.message || 'Soumission rejetée avec succès.');
     } catch (error) {
       console.error('Error rejecting submission:', error);
+      alert(error instanceof Error ? error.message : 'Erreur lors du rejet de la soumission. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -312,16 +459,9 @@ export default function CampaignDetailPage() {
             </button>
             <button
               onClick={() => {
-                const newBudget = prompt('Nouveau budget (€):', campaign.budget.toString());
-                if (newBudget && !isNaN(Number(newBudget)) && Number(newBudget) > campaign.budget) {
-                  const increase = Number(newBudget) - campaign.budget;
-                  setCampaign({
-                    ...campaign,
-                    budget: Number(newBudget),
-                    remainingBudget: campaign.remainingBudget + increase
-                  });
-                  alert(`Budget augmenté de €${increase} avec succès!`);
-                }
+                setShowBudgetModal(true);
+                setNewBudget(campaign.budget.toString());
+                setBudgetError('');
               }}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
@@ -570,6 +710,9 @@ export default function CampaignDetailPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Montant
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -643,6 +786,33 @@ export default function CampaignDetailPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
                         {submission.status === 'APPROVED' ? formatCurrency(submission.amountEarned) : '-'}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {submission.status === 'PENDING' ? (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleApproveSubmission(submission.id)}
+                              className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                              title="Approuver cette soumission"
+                            >
+                              <ThumbsUp className="h-4 w-4 mr-1" />
+                              Approuver
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedSubmission(submission);
+                                setShowReviewModal(true);
+                              }}
+                              className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                              title="Rejeter cette soumission"
+                            >
+                              <ThumbsDown className="h-4 w-4 mr-1" />
+                              Rejeter
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -664,38 +834,279 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
-      {/* Review Modal */}
+      {/* Rejection Modal */}
       {showReviewModal && selectedSubmission && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowReviewModal(false)}></div>
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Rejeter la soumission
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Vous êtes sur le point de rejeter la soumission de {selectedSubmission.clipperName}.
-                Veuillez indiquer la raison du rejet.
-              </p>
-              <textarea
-                value={reviewNote}
-                onChange={(e) => setReviewNote(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Raison du rejet..."
-              />
-              <div className="flex justify-end space-x-3 mt-6">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={() => {
+                if (!isSubmitting) {
+                  setShowReviewModal(false);
+                  setReviewNote('');
+                  setValidationError('');
+                  setSelectedSubmission(null);
+                }
+              }}
+            ></div>
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6 shadow-xl">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Rejeter la soumission
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Soumission de {selectedSubmission.clipperName}
+                  </p>
+                </div>
                 <button
-                  onClick={() => setShowReviewModal(false)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    if (!isSubmitting) {
+                      setShowReviewModal(false);
+                      setReviewNote('');
+                      setValidationError('');
+                      setSelectedSubmission(null);
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  disabled={isSubmitting}
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Motif du rejet <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reviewNote}
+                  onChange={(e) => {
+                    setReviewNote(e.target.value);
+                    setValidationError('');
+                  }}
+                  rows={5}
+                  className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                    validationError
+                      ? 'border-red-500 dark:border-red-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  placeholder="Veuillez expliquer pourquoi cette soumission est rejetée... (minimum 10 caractères)"
+                  disabled={isSubmitting}
+                />
+                {validationError && (
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {validationError}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {reviewNote.length} caractères (minimum 10 requis)
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    Le clipper sera notifié du rejet et pourra voir votre motif. Soyez constructif et précis.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setReviewNote('');
+                    setValidationError('');
+                    setSelectedSubmission(null);
+                  }}
+                  className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
+                  disabled={isSubmitting}
                 >
                   Annuler
                 </button>
                 <button
                   onClick={() => handleRejectSubmission(selectedSubmission.id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  disabled={isSubmitting}
                 >
-                  Confirmer le rejet
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Confirmer le rejet
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Budget Increase Modal */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={() => {
+                if (!isSubmitting) {
+                  setShowBudgetModal(false);
+                  setNewBudget('');
+                  setBudgetError('');
+                }
+              }}
+            ></div>
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full p-6 shadow-xl">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Augmenter le budget de la campagne
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {campaign.title}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!isSubmitting) {
+                      setShowBudgetModal(false);
+                      setNewBudget('');
+                      setBudgetError('');
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  disabled={isSubmitting}
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Current Budget Info */}
+              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Budget actuel</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {formatCurrency(campaign.budget)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Solde disponible</p>
+                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                      {balance ? formatCurrency(balance.available) : '...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nouveau budget <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={newBudget}
+                    onChange={(e) => {
+                      setNewBudget(e.target.value);
+                      setBudgetError('');
+                    }}
+                    min={campaign.budget + 1}
+                    step="0.01"
+                    className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                      budgetError
+                        ? 'border-red-500 dark:border-red-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="Entrez le nouveau budget"
+                    disabled={isSubmitting}
+                  />
+                  <span className="absolute right-4 top-3 text-gray-500 dark:text-gray-400">€</span>
+                </div>
+                {budgetError && (
+                  <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400 flex items-start">
+                      <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>{budgetError}</span>
+                    </p>
+                  </div>
+                )}
+                {newBudget && !budgetError && parseFloat(newBudget) > campaign.budget && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Augmentation: <span className="font-semibold text-orange-600 dark:text-orange-400">
+                      +{formatCurrency(parseFloat(newBudget) - campaign.budget)}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-6">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    <p className="font-medium mb-1">Important :</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>Le montant sera déduit de votre solde disponible</li>
+                      <li>Le budget ne peut être que augmenté, pas diminué</li>
+                      <li>L'augmentation sera immédiatement disponible pour la campagne</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {balance && balance.available < 100 && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-2 flex-shrink-0" />
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      Votre solde est faible. Pensez à{' '}
+                      <Link href="/dashboard/advertiser/balance" className="underline font-medium">
+                        recharger votre compte
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowBudgetModal(false);
+                    setNewBudget('');
+                    setBudgetError('');
+                  }}
+                  className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleIncreaseBudget}
+                  className="px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Confirmer l'augmentation
+                    </>
+                  )}
                 </button>
               </div>
             </div>

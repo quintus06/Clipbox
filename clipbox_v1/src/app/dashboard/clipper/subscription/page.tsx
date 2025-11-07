@@ -34,6 +34,7 @@ export default function ClipperSubscriptionPage() {
   const [showManageModal, setShowManageModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
+  const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({});
   
   const currentPlan = {
     name: 'Pro',
@@ -50,11 +51,11 @@ export default function ClipperSubscriptionPage() {
       description: 'Pour débuter sur ClipBox',
       color: 'gray',
       features: [
-        { name: '1 campagne simultanée', included: true },
+        { name: '5 campagnes en simultané', included: true },
         { name: 'Maximum 1 compte par réseau social', included: true },
-        { name: 'Maximum 2 vidéos par campagne', included: true },
-        { name: 'Commission de 20%', included: true },
-        { name: 'Retrait bi-mensuel', included: true },
+        { name: 'Maximum 4 vidéos par campagne', included: true },
+        { name: 'Commission de 15%', included: true },
+        { name: 'Retraits instantanés', included: true },
         { name: 'Support par email', included: true },
         { name: 'Statistiques de base', included: true },
         { name: 'Profil public basique', included: true },
@@ -74,11 +75,11 @@ export default function ClipperSubscriptionPage() {
       color: 'blue',
       badge: null,
       features: [
-        { name: '3 campagnes simultanées', included: true },
+        { name: '10 campagnes en simultané', included: true },
         { name: 'Maximum 2 comptes par réseau social', included: true },
         { name: 'Maximum 6 vidéos par campagne', included: true },
         { name: 'Commission réduite (15%)', included: true },
-        { name: 'Retrait hebdomadaire', included: true },
+        { name: 'Retraits instantanés', included: true },
         { name: 'Support par email et chat', included: true },
         { name: 'Statistiques détaillées', included: true },
         { name: 'Profil public personnalisé', included: true },
@@ -98,11 +99,11 @@ export default function ClipperSubscriptionPage() {
       color: 'purple',
       badge: 'Populaire',
       features: [
-        { name: '8 campagnes simultanées', included: true },
-        { name: 'Campagnes illimitées au total', included: true },
-        { name: 'Maximum 4 comptes par réseau social', included: true },
+        { name: 'Campagnes illimitées', included: true },
+        { name: 'Maximum 2 comptes par réseau social', included: true },
         { name: 'Maximum 10 vidéos par campagne', included: true },
         { name: 'Commission réduite (10%)', included: true },
+        { name: 'Accès aux contenus premium', included: true },
         { name: 'Retraits instantanés', included: true },
         { name: 'Support prioritaire', included: true },
         { name: 'Analytics complets', included: true },
@@ -126,11 +127,10 @@ export default function ClipperSubscriptionPage() {
         { name: 'Comptes illimités par réseau social', included: true },
         { name: 'Vidéos illimitées par campagne', included: true },
         { name: 'Commission minimale (5%)', included: true },
+        { name: 'Accès aux contenus premium', included: true },
         { name: 'Retraits instantanés', included: true },
         { name: 'Support prioritaire 24/7', included: true },
-        { name: 'Account manager dédié', included: true },
         { name: 'Analytics prédictifs avec IA', included: true },
-        { name: 'Page de marque personnalisée', included: true },
         { name: 'Accès VIP aux campagnes premium', included: true },
         { name: 'Badge Goat exclusif', included: true },
         { name: 'Tableau de bord personnalisé', included: true },
@@ -268,6 +268,8 @@ export default function ClipperSubscriptionPage() {
           const price = billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly / 12;
           const isCurrentPlan = plan.name === currentPlan.name;
           const savings = calculateSavings(plan.price.monthly, plan.price.yearly);
+          const showAllFeatures = expandedPlans[plan.id] || false;
+          const displayFeatures = showAllFeatures ? plan.features : plan.features.slice(0, 6);
           
           return (
             <div
@@ -333,7 +335,7 @@ export default function ClipperSubscriptionPage() {
                 )}
 
                 <div className="mt-6 space-y-3">
-                  {plan.features.slice(0, 6).map((feature, index) => (
+                  {displayFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start gap-2">
                       {feature.included ? (
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -351,9 +353,12 @@ export default function ClipperSubscriptionPage() {
                   ))}
                   
                   {plan.features.length > 6 && (
-                    <button className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                      Voir toutes les fonctionnalités
-                      <ChevronRight className="w-4 h-4" />
+                    <button
+                      onClick={() => setExpandedPlans(prev => ({ ...prev, [plan.id]: !prev[plan.id] }))}
+                      className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                    >
+                      {showAllFeatures ? 'Voir moins' : 'Voir toutes les fonctionnalités'}
+                      <ChevronRight className={`w-4 h-4 transition-transform ${showAllFeatures ? 'rotate-90' : ''}`} />
                     </button>
                   )}
                 </div>

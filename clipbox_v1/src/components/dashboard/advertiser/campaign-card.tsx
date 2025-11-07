@@ -35,6 +35,35 @@ interface CampaignCardProps {
 
 export default function CampaignCard({ campaign }: CampaignCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+
+  const handlePauseCampaign = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir mettre cette campagne en pause ?')) {
+      return;
+    }
+
+    setIsPausing(true);
+    try {
+      const response = await fetch(`/api/advertiser/campaigns/${campaign.id}/pause`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la mise en pause');
+      }
+
+      alert('Campagne mise en pause avec succès');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error pausing campaign:', error);
+      alert(error instanceof Error ? error.message : 'Erreur lors de la mise en pause');
+    } finally {
+      setIsPausing(false);
+      setShowMenu(false);
+    }
+  };
 
   const statusConfig = {
     ACTIVE: {
@@ -141,8 +170,12 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
                     <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
                       Augmenter le budget
                     </button>
-                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
-                      Mettre en pause
+                    <button
+                      onClick={handlePauseCampaign}
+                      disabled={isPausing}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isPausing ? 'Mise en pause...' : 'Mettre en pause'}
                     </button>
                   </>
                 )}

@@ -85,29 +85,67 @@ const mockCampaigns = [
 ];
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState(mockCampaigns);
-  const [filteredCampaigns, setFilteredCampaigns] = useState(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [platformFilter, setPlatformFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('createdAt');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
   // Stats
   const stats = {
     total: campaigns.length,
     active: campaigns.filter(c => c.status === 'ACTIVE').length,
-    pending: campaigns.filter(c => c.status === 'PENDING').length,
+    pending: campaigns.filter(c => c.status === 'PENDING' || c.status === 'DRAFT').length,
     completed: campaigns.filter(c => c.status === 'COMPLETED').length,
-    totalBudget: campaigns.reduce((sum, c) => sum + c.budget, 0),
-    totalSpent: campaigns.reduce((sum, c) => sum + (c.budget - c.remainingBudget), 0),
+    totalBudget: campaigns.reduce((sum, c) => sum + Number(c.budget), 0),
+    totalSpent: campaigns.reduce((sum, c) => sum + (Number(c.budget) - Number(c.remainingBudget)), 0),
     totalViews: campaigns.reduce((sum, c) => sum + c.totalViews, 0),
   };
 
   useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  useEffect(() => {
     filterAndSortCampaigns();
-  }, [searchTerm, statusFilter, platformFilter, sortBy]);
+  }, [campaigns, searchTerm, statusFilter, platformFilter, sortBy]);
+
+  const fetchCampaigns = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/advertiser/campaigns');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
+      }
+      const data = await response.json();
+      
+      // Transform data to match expected format
+      const transformedData = data.map((campaign: any) => ({
+        id: campaign.id,
+        title: campaign.title,
+        status: campaign.status,
+        budget: Number(campaign.budget),
+        remainingBudget: Number(campaign.remainingBudget),
+        submissions: campaign.totalSubmissions || 0,
+        approvedSubmissions: campaign.approvedSubmissions || 0,
+        totalViews: campaign.totalViews || 0,
+        platform: campaign.targetPlatforms?.[0] || 'TIKTOK',
+        endDate: new Date(campaign.endDate),
+        createdAt: new Date(campaign.createdAt),
+      }));
+      
+      setCampaigns(transformedData);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+      // Fallback to mock data on error
+      setCampaigns(mockCampaigns);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filterAndSortCampaigns = () => {
     let filtered = [...campaigns];

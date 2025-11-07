@@ -123,15 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Clear user state first
+      setUser(null);
+      
+      // Call logout API
       await fetch("/api/auth/logout", {
         method: "POST",
       });
       
-      setUser(null);
-      router.push("/");
+      // Force redirect to landing page
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
-      throw error;
+      // Even if API fails, still redirect to landing page
+      window.location.href = "/";
     }
   };
 
