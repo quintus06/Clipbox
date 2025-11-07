@@ -176,26 +176,43 @@ export async function GET(request: NextRequest) {
     let redirectUrl = callbackUrl;
 
     if (!user) {
-      // Create new user with selected role
+      // Create new user with selected role and balance (for advertisers) in a transaction
       const userRole = role === 'ADVERTISER' ? 'ADVERTISER' : 'CLIPPER';
       
-      user = await prisma.user.create({
-        data: {
-          email: googleUser.email,
-          name: googleUser.name,
-          image: googleUser.picture,
-          role: userRole,
-          profile: {
-            create: {
-              notifyEmail: true,
-              notifyPush: true,
-              publicProfile: true,
+      user = await prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email: googleUser.email,
+            name: googleUser.name,
+            image: googleUser.picture,
+            role: userRole,
+            profile: {
+              create: {
+                notifyEmail: true,
+                notifyPush: true,
+                publicProfile: true,
+              },
             },
           },
-        },
-        include: {
-          profile: true,
-        },
+          include: {
+            profile: true,
+          },
+        });
+
+        // Create Balance record for ADVERTISER users with 3500 EUR starting balance
+        if (userRole === 'ADVERTISER') {
+          await tx.balance.create({
+            data: {
+              userId: newUser.id,
+              currency: 'EUR',
+              available: 3500,
+              pending: 0,
+            },
+          });
+          console.log('[Google OAuth] Balance initialized for advertiser:', newUser.email, 'with 3500 EUR');
+        }
+
+        return newUser;
       });
 
       console.log('[Google OAuth] New user created with role:', userRole, 'email:', user.email);

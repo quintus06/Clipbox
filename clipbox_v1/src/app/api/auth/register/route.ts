@@ -40,25 +40,42 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(validatedData.password, 12);
     
-    // Create user with profile
-    const user = await prisma.user.create({
-      data: {
-        email: validatedData.email,
-        name: validatedData.name,
-        password: hashedPassword,
-        role: validatedData.role as any,
-        profile: {
-          create: {
-            company: validatedData.company,
-            notifyEmail: true,
-            notifyPush: true,
-            publicProfile: true,
+    // Create user with profile and balance (for advertisers) in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: validatedData.email,
+          name: validatedData.name,
+          password: hashedPassword,
+          role: validatedData.role as any,
+          profile: {
+            create: {
+              company: validatedData.company,
+              notifyEmail: true,
+              notifyPush: true,
+              publicProfile: true,
+            },
           },
         },
-      },
-      include: {
-        profile: true,
-      },
+        include: {
+          profile: true,
+        },
+      });
+
+      // Create Balance record for ADVERTISER users with 3500 EUR starting balance
+      if (validatedData.role === 'ADVERTISER') {
+        await tx.balance.create({
+          data: {
+            userId: newUser.id,
+            currency: 'EUR',
+            available: 3500,
+            pending: 0,
+          },
+        });
+        console.log('[Register] Balance initialized for advertiser:', newUser.email, 'with 3500 EUR');
+      }
+
+      return newUser;
     });
     
     console.log("[Register] User created successfully:", user.email);
