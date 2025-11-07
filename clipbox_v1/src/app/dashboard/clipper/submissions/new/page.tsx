@@ -76,60 +76,16 @@ interface SocialAccount {
   updatedAt: Date;
 }
 
-const mockRecentVideos = [
-  {
-    id: '1',
-    title: 'Summer Outfit Ideas 2024',
-    platform: 'TIKTOK',
-    url: 'https://tiktok.com/@user/video/123',
-    thumbnail: 'https://via.placeholder.com/200x300',
-    views: 12500,
-    likes: 890,
-    comments: 45,
-    shares: 23,
-    publishedAt: '2024-01-28T10:30:00',
-    duration: '0:28',
-  },
-  {
-    id: '2',
-    title: 'Get Ready With Me - Date Night',
-    platform: 'INSTAGRAM_REELS',
-    url: 'https://instagram.com/reel/abc123',
-    thumbnail: 'https://via.placeholder.com/200x300',
-    views: 8900,
-    likes: 567,
-    comments: 34,
-    shares: 12,
-    publishedAt: '2024-01-27T15:45:00',
-    duration: '0:45',
-  },
-  {
-    id: '3',
-    title: 'Tech Unboxing - New Gadgets',
-    platform: 'YOUTUBE_SHORTS',
-    url: 'https://youtube.com/shorts/xyz789',
-    thumbnail: 'https://via.placeholder.com/200x300',
-    views: 5600,
-    likes: 234,
-    comments: 18,
-    shares: 8,
-    publishedAt: '2024-01-26T12:00:00',
-    duration: '0:59',
-  },
-  {
-    id: '4',
-    title: 'Makeup Tutorial - Natural Look',
-    platform: 'TIKTOK',
-    url: 'https://tiktok.com/@user/video/456',
-    thumbnail: 'https://via.placeholder.com/200x300',
-    views: 18900,
-    likes: 1234,
-    comments: 67,
-    shares: 45,
-    publishedAt: '2024-01-25T09:15:00',
-    duration: '0:32',
-  },
-];
+// Video interface for fetched videos
+interface Video {
+  id: string;
+  title: string;
+  thumbnail: string;
+  publishedAt: string;
+  viewCount: number;
+  duration: string;
+  url: string;
+}
 
 const platformIcons: Record<string, any> = {
   TIKTOK: Smartphone,
@@ -156,6 +112,9 @@ export default function NewSubmissionPage() {
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [accountsError, setAccountsError] = useState<string | null>(null);
+  const [recentVideos, setRecentVideos] = useState<Video[]>([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+  const [videosError, setVideosError] = useState<string | null>(null);
 
   // Load social accounts from API
   useEffect(() => {
@@ -193,6 +152,45 @@ export default function NewSubmissionPage() {
       }
     }
   }, [preselectedCampaignId]);
+
+  // Load videos when account is selected and we move to step 3
+  useEffect(() => {
+    const loadVideos = async () => {
+      if (!selectedAccount || currentStep !== 3) {
+        return;
+      }
+
+      // Only fetch videos for YouTube accounts
+      if (selectedAccount.platform !== 'YOUTUBE_SHORTS') {
+        setRecentVideos([]);
+        return;
+      }
+
+      setLoadingVideos(true);
+      setVideosError(null);
+      
+      try {
+        const response = await fetch(
+          `/api/youtube/videos?accountId=${selectedAccount.id}&maxResults=10`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setRecentVideos(data.videos || []);
+        } else {
+          const errorData = await response.json();
+          setVideosError(errorData.error || 'Erreur lors du chargement des vidéos');
+        }
+      } catch (error) {
+        console.error('Error loading videos:', error);
+        setVideosError('Erreur lors du chargement des vidéos');
+      } finally {
+        setLoadingVideos(false);
+      }
+    };
+
+    loadVideos();
+  }, [selectedAccount, currentStep]);
 
   const handleNextStep = () => {
     if (currentStep === 1 && !selectedCampaign) {
@@ -248,16 +246,9 @@ export default function NewSubmissionPage() {
       })
     : [];
 
-  // Filter videos based on selected account
-  const filteredVideos = selectedAccount
-    ? mockRecentVideos.filter(video => {
-        const platformMap: Record<string, string> = {
-          'TIKTOK': 'TIKTOK',
-          'INSTAGRAM_REELS': 'INSTAGRAM',
-          'YOUTUBE_SHORTS': 'YOUTUBE',
-        };
-        return platformMap[video.platform] === selectedAccount.platform;
-      })
+  // For YouTube accounts, use fetched videos; for others, show empty state
+  const displayVideos = selectedAccount?.platform === 'YOUTUBE_SHORTS'
+    ? recentVideos
     : [];
 
   return (
@@ -552,8 +543,39 @@ export default function NewSubmissionPage() {
               <h3 className="font-medium text-gray-900 dark:text-white mb-3">
                 Vidéos récentes
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {filteredVideos.map((video) => (
+              
+              {loadingVideos ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Chargement de vos vidéos...
+                  </p>
+                </div>
+              ) : videosError ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                  <p className="text-red-600 dark:text-red-400 mb-2">
+                    {videosError}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Vous pouvez toujours entrer l'URL manuellement ci-dessous
+                  </p>
+                </div>
+              ) : displayVideos.length === 0 ? (
+                <div className="text-center py-8">
+                  <Video className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    {selectedAccount?.platform === 'YOUTUBE_SHORTS'
+                      ? 'Aucune vidéo trouvée sur votre chaîne'
+                      : 'La sélection automatique n\'est disponible que pour YouTube'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Entrez l'URL de votre vidéo manuellement ci-dessous
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {displayVideos.map((video) => (
                   <div
                     key={video.id}
                     onClick={() => {
@@ -568,6 +590,13 @@ export default function NewSubmissionPage() {
                   >
                     <div className="aspect-[9/16] bg-gray-200 dark:bg-gray-700 relative">
                       {/* Video thumbnail */}
+                      {video.thumbnail && (
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                       <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                         {video.duration}
                       </div>
@@ -584,17 +613,16 @@ export default function NewSubmissionPage() {
                       <div className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-0.5">
                           <Eye className="h-3 w-3" />
-                          {(video.views / 1000).toFixed(1)}K
-                        </span>
-                        <span className="flex items-center gap-0.5">
-                          <Heart className="h-3 w-3" />
-                          {video.likes}
+                          {video.viewCount >= 1000
+                            ? `${(video.viewCount / 1000).toFixed(1)}K`
+                            : video.viewCount}
                         </span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Manual URL Input */}
