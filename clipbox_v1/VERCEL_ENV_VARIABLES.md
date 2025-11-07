@@ -1,6 +1,6 @@
-# Environment Variables for Google OAuth
+# Environment Variables for OAuth Authentication
 
-This document explains all required environment variables for Google OAuth authentication and how to configure them properly in Vercel.
+This document explains all required environment variables for Google and YouTube OAuth authentication and how to configure them properly in Vercel.
 
 ## Quick Setup Guide
 
@@ -109,7 +109,83 @@ http://localhost:3000/api/auth/google/callback
 
 ---
 
-### 6. NEXTAUTH_SECRET (Required for Production)
+## YouTube OAuth Configuration
+
+YouTube OAuth uses the same Google OAuth credentials but requires separate redirect URI configuration.
+
+### 6. YOUTUBE_CLIENT_ID
+**Purpose:** Your Google OAuth 2.0 Client ID (same as Google OAuth).
+
+**Value:**
+```
+[YOUR_GOOGLE_CLIENT_ID]
+```
+
+**Important Notes:**
+- YouTube OAuth uses the **same credentials** as Google OAuth
+- This should be the **same value** as `GOOGLE_CLIENT_ID`
+- Both variables are required for the respective OAuth flows to work
+
+**Vercel Configuration:**
+- Set for **Production**, **Preview**, and **Development** environments
+
+---
+
+### 7. YOUTUBE_CLIENT_SECRET
+**Purpose:** Your Google OAuth 2.0 Client Secret (same as Google OAuth).
+
+**Value:**
+```
+[YOUR_GOOGLE_CLIENT_SECRET]
+```
+
+**Security Notes:**
+- ⚠️ Keep this secret! Never commit to version control
+- This should be the **same value** as `GOOGLE_CLIENT_SECRET`
+- Both variables are required for the respective OAuth flows to work
+
+**Vercel Configuration:**
+- Set for **Production**, **Preview**, and **Development** environments
+- Mark as **Sensitive** in Vercel
+
+---
+
+### 8. YOUTUBE_REDIRECT_URI_PROD (Optional)
+**Purpose:** Override the default redirect URI for YouTube OAuth in production.
+
+**Value:**
+```
+https://clipbox.io/api/auth/youtube/callback
+```
+
+**When to Use:**
+- Only needed if you want to override the automatic redirect URI construction
+- If `NEXTAUTH_URL` is set, this is optional (the system will use `${NEXTAUTH_URL}/api/auth/youtube/callback`)
+- Useful for custom domain configurations
+
+**Vercel Configuration:**
+- Set for **Production** environment only
+
+---
+
+### 9. YOUTUBE_REDIRECT_URI (Optional)
+**Purpose:** Override the default redirect URI for YouTube OAuth in development.
+
+**Value:**
+```
+http://localhost:3000/api/auth/youtube/callback
+```
+
+**When to Use:**
+- Only needed for local development if you want to override the default
+- If `NEXTAUTH_URL` is set, this is optional
+
+**Vercel Configuration:**
+- Set for **Development** environment only
+
+---
+
+### 10. NEXTAUTH_SECRET (Required for Production)
 **Purpose:** Secret key for signing JWT tokens and encrypting session data.
 
 **How to Generate:**
@@ -145,6 +221,36 @@ The system uses the following priority for redirect URIs:
 
 ---
 
+## Environment Variable Priority
+
+The system uses the following priority for redirect URIs:
+
+### Google OAuth
+
+#### Production:
+1. `GOOGLE_REDIRECT_URI_PROD` (if set)
+2. `${NEXTAUTH_URL}/api/auth/google/callback` (if NEXTAUTH_URL is set)
+3. ❌ Error if neither is set
+
+#### Development:
+1. `GOOGLE_REDIRECT_URI` (if set)
+2. `${NEXTAUTH_URL}/api/auth/google/callback` (if NEXTAUTH_URL is set)
+3. ❌ Error if neither is set
+
+### YouTube OAuth
+
+#### Production:
+1. `YOUTUBE_REDIRECT_URI_PROD` (if set)
+2. `${NEXTAUTH_URL}/api/auth/youtube/callback` (if NEXTAUTH_URL is set)
+3. ❌ Error if neither is set
+
+#### Development:
+1. `YOUTUBE_REDIRECT_URI` (if set)
+2. `${NEXTAUTH_URL}/api/auth/youtube/callback` (if NEXTAUTH_URL is set)
+3. ❌ Error if neither is set
+
+---
+
 ## Google Cloud Console Configuration
 
 ### Step 1: Access Google Cloud Console
@@ -156,20 +262,36 @@ The system uses the following priority for redirect URIs:
 1. Click on your OAuth 2.0 Client ID
 2. Under **"Authorized redirect URIs"**, add:
 
-**Production:**
+**Production (Google OAuth):**
 ```
 https://clipbox.io/api/auth/google/callback
 ```
 
-**Development:**
+**Production (YouTube OAuth):**
+```
+https://clipbox.io/api/auth/youtube/callback
+```
+
+**Development (Google OAuth):**
 ```
 http://localhost:3000/api/auth/google/callback
+```
+
+**Development (YouTube OAuth):**
+```
+http://localhost:3000/api/auth/youtube/callback
 ```
 
 **Preview (if using Vercel preview deployments):**
 ```
 https://your-preview-url.vercel.app/api/auth/google/callback
+https://your-preview-url.vercel.app/api/auth/youtube/callback
 ```
+
+**Important Notes:**
+- YouTube OAuth uses the **same Google OAuth credentials**
+- You need to add **both** redirect URIs to the same OAuth 2.0 Client
+- The only difference is the callback path: `/api/auth/google/callback` vs `/api/auth/youtube/callback`
 
 ### Step 3: Save Changes
 Click **"Save"** at the bottom of the page.
@@ -255,11 +377,20 @@ The application now includes automatic validation of environment variables:
 - Missing variables trigger clear error messages
 
 ### Validation Checks
-✅ `NEXTAUTH_URL` is set and is a valid URL  
-✅ `NEXTAUTH_URL` doesn't end with a trailing slash  
-✅ `GOOGLE_CLIENT_ID` is set  
-✅ `GOOGLE_CLIENT_SECRET` is set  
-✅ Redirect URI can be constructed properly  
+
+**Google OAuth:**
+✅ `NEXTAUTH_URL` is set and is a valid URL
+✅ `NEXTAUTH_URL` doesn't end with a trailing slash
+✅ `GOOGLE_CLIENT_ID` is set
+✅ `GOOGLE_CLIENT_SECRET` is set
+✅ Redirect URI can be constructed properly
+
+**YouTube OAuth:**
+✅ `NEXTAUTH_URL` is set and is a valid URL
+✅ `NEXTAUTH_URL` doesn't end with a trailing slash
+✅ `YOUTUBE_CLIENT_ID` is set
+✅ `YOUTUBE_CLIENT_SECRET` is set
+✅ Redirect URI can be constructed properly
 
 ### Error Messages
 When validation fails, you'll see:
@@ -307,8 +438,12 @@ touch .env.local
 NEXTAUTH_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=[YOUR_GOOGLE_CLIENT_ID]
 GOOGLE_CLIENT_SECRET=[YOUR_GOOGLE_CLIENT_SECRET]
+YOUTUBE_CLIENT_ID=[YOUR_GOOGLE_CLIENT_ID]
+YOUTUBE_CLIENT_SECRET=[YOUR_GOOGLE_CLIENT_SECRET]
 NEXTAUTH_SECRET=your-local-secret-here
 ```
+
+**Note:** `YOUTUBE_CLIENT_ID` and `YOUTUBE_CLIENT_SECRET` should have the **same values** as the Google OAuth credentials.
 
 ### 3. Run development server
 ```bash

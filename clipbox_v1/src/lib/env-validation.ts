@@ -119,6 +119,101 @@ export function getGoogleRedirectUri(): string | null {
 }
 
 /**
+ * Validates YouTube OAuth environment variables
+ */
+export function validateYouTubeOAuthEnv(): EnvValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Check NEXTAUTH_URL
+  const nextAuthUrl = process.env.NEXTAUTH_URL;
+  if (!nextAuthUrl) {
+    errors.push(
+      'NEXTAUTH_URL is not set. This is required for OAuth redirect URIs. ' +
+      'Set it to your application URL (e.g., https://yourdomain.com or http://localhost:3000 for development)'
+    );
+  } else if (!isValidUrl(nextAuthUrl)) {
+    errors.push(
+      `NEXTAUTH_URL is not a valid URL: "${nextAuthUrl}". ` +
+      'It must start with http:// or https:// and be a complete URL'
+    );
+  } else if (nextAuthUrl.endsWith('/')) {
+    warnings.push(
+      'NEXTAUTH_URL should not end with a trailing slash. ' +
+      `Current value: "${nextAuthUrl}". Consider removing the trailing slash.`
+    );
+  }
+
+  // Check YOUTUBE_CLIENT_ID (uses same as Google)
+  const youtubeClientId = process.env.YOUTUBE_CLIENT_ID;
+  if (!youtubeClientId) {
+    errors.push(
+      'YOUTUBE_CLIENT_ID is not set. YouTube OAuth uses Google OAuth credentials. ' +
+      'Get this from Google Cloud Console: https://console.cloud.google.com/apis/credentials'
+    );
+  } else if (youtubeClientId.trim() !== youtubeClientId) {
+    warnings.push('YOUTUBE_CLIENT_ID has leading or trailing whitespace');
+  }
+
+  // Check YOUTUBE_CLIENT_SECRET (uses same as Google)
+  const youtubeClientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+  if (!youtubeClientSecret) {
+    errors.push(
+      'YOUTUBE_CLIENT_SECRET is not set. YouTube OAuth uses Google OAuth credentials. ' +
+      'Get this from Google Cloud Console: https://console.cloud.google.com/apis/credentials'
+    );
+  } else if (youtubeClientSecret.trim() !== youtubeClientSecret) {
+    warnings.push('YOUTUBE_CLIENT_SECRET has leading or trailing whitespace');
+  }
+
+  // Check redirect URI configuration
+  const youtubeRedirectUri = process.env.YOUTUBE_REDIRECT_URI;
+  const youtubeRedirectUriProd = process.env.YOUTUBE_REDIRECT_URI_PROD;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && !youtubeRedirectUriProd && !nextAuthUrl) {
+    errors.push(
+      'In production, either YOUTUBE_REDIRECT_URI_PROD or NEXTAUTH_URL must be set. ' +
+      'YOUTUBE_REDIRECT_URI_PROD takes precedence if both are set.'
+    );
+  }
+
+  if (!isProduction && !youtubeRedirectUri && !nextAuthUrl) {
+    errors.push(
+      'In development, either YOUTUBE_REDIRECT_URI or NEXTAUTH_URL must be set. ' +
+      'YOUTUBE_REDIRECT_URI takes precedence if both are set.'
+    );
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Gets the YouTube OAuth redirect URI based on environment
+ * Returns null if environment variables are not properly configured
+ */
+export function getYouTubeRedirectUri(): string | null {
+  const nextAuthUrl = process.env.NEXTAUTH_URL;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    const prodUri = process.env.YOUTUBE_REDIRECT_URI_PROD;
+    if (prodUri) return prodUri;
+    if (nextAuthUrl) return `${nextAuthUrl}/api/auth/youtube/callback`;
+    return null;
+  } else {
+    const devUri = process.env.YOUTUBE_REDIRECT_URI;
+    if (devUri) return devUri;
+    if (nextAuthUrl) return `${nextAuthUrl}/api/auth/youtube/callback`;
+    return null;
+  }
+}
+
+/**
  * Logs validation results to console with appropriate formatting
  */
 export function logValidationResults(

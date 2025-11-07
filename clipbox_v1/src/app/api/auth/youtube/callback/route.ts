@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { storeOAuthTokens } from '@/lib/oauth-utils';
 import { Platform } from '@prisma/client';
+import {
+  validateYouTubeOAuthEnv,
+  getYouTubeRedirectUri,
+  logValidationResults,
+} from '@/lib/env-validation';
 
 export async function GET(request: NextRequest) {
   try {
+    // Validate environment variables before proceeding
+    const validation = validateYouTubeOAuthEnv();
+    logValidationResults('YouTube', validation);
+
+    // If validation fails, redirect to settings with error
+    if (!validation.isValid) {
+      console.error('YouTube OAuth callback failed due to missing environment variables');
+      console.error('Validation errors:', validation.errors);
+      
+      return NextResponse.redirect(
+        new URL(
+          '/dashboard/clipper/settings?error=' + encodeURIComponent(
+            'Configuration OAuth manquante. Veuillez contacter le support.'
+          ),
+          request.url
+        )
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -23,6 +47,7 @@ export async function GET(request: NextRequest) {
     // Verify state parameter
     const storedState = request.cookies.get('youtube_oauth_state')?.value;
     if (!state || state !== storedState) {
+      console.error('OAuth state mismatch:', { received: state, stored: storedState });
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('État OAuth invalide'),
@@ -34,6 +59,7 @@ export async function GET(request: NextRequest) {
     // Get user ID from cookie
     const userId = request.cookies.get('youtube_oauth_user')?.value;
     if (!userId) {
+      console.error('User ID missing from cookies');
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Session expirée'),
@@ -45,6 +71,7 @@ export async function GET(request: NextRequest) {
     // Get code verifier for PKCE
     const codeVerifier = request.cookies.get('youtube_code_verifier')?.value;
     if (!codeVerifier) {
+      console.error('Code verifier missing from cookies');
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Code verifier manquant'),
@@ -54,6 +81,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!code) {
+      console.error('Authorization code missing from callback');
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Code d\'autorisation manquant'),
@@ -61,6 +89,23 @@ export async function GET(request: NextRequest) {
         )
       );
     }
+
+    // Get the redirect URI (must match what was used in authorize)
+    const redirectUri = getYouTubeRedirectUri();
+    
+    if (!redirectUri || redirectUri.includes('undefined')) {
+      console.error('Failed to construct valid redirect_uri for token exchange:', redirectUri);
+      return NextResponse.redirect(
+        new URL(
+          '/dashboard/clipper/settings?error=' + encodeURIComponent('Erreur de configuration OAuth'),
+          request.url
+        )
+      );
+    }
+
+    console.log('=== YouTube OAuth Callback ===');
+    console.log('Exchanging code for token...');
+    console.log('Redirect URI:', redirectUri);
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -74,15 +119,15 @@ export async function GET(request: NextRequest) {
         code,
         code_verifier: codeVerifier,
         grant_type: 'authorization_code',
-        redirect_uri: process.env.NODE_ENV === 'production'
-          ? process.env.YOUTUBE_REDIRECT_URI_PROD!
-          : process.env.YOUTUBE_REDIRECT_URI!,
+        redirect_uri: redirectUri,
       }),
     });
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('YouTube token exchange error:', errorData);
+      console.error('Token exchange failed with status:', tokenResponse.status);
+      
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Échec de l\'échange de token'),
@@ -92,6 +137,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenData = await tokenResponse.json();
+    console.log('Token exchange successful');
 
     // Get YouTube channel info
     const channelResponse = await fetch(
@@ -104,7 +150,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!channelResponse.ok) {
-      console.error('YouTube channel info error');
+      console.error('YouTube channel info error, status:', channelResponse.status);
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Échec de récupération des infos YouTube'),
@@ -114,8 +160,10 @@ export async function GET(request: NextRequest) {
     }
 
     const channelData = await channelResponse.json();
+    console.log('Channel info retrieved');
 
     if (!channelData.items || channelData.items.length === 0) {
+      console.error('No YouTube channel found for user');
       return NextResponse.redirect(
         new URL(
           '/dashboard/clipper/settings?error=' + encodeURIComponent('Aucune chaîne YouTube trouvée'),
@@ -139,6 +187,8 @@ export async function GET(request: NextRequest) {
       followers: parseInt(channel.statistics.subscriberCount) || 0,
     });
 
+    console.log('[YouTube OAuth] Channel connected successfully:', channel.snippet.title);
+
     // Clear OAuth cookies
     const response = NextResponse.redirect(
       new URL('/dashboard/clipper/settings?success=youtube', request.url)
@@ -151,6 +201,13 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('YouTube OAuth callback error:', error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
     return NextResponse.redirect(
       new URL(
         '/dashboard/clipper/settings?error=' + encodeURIComponent('Erreur lors de la connexion YouTube'),
