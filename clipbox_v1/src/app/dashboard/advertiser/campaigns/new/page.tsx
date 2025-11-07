@@ -150,19 +150,57 @@ export default function NewCampaignPage() {
 
     setIsSubmitting(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In real app, would call:
-      // const response = await fetch('/api/advertiser/campaigns', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      // Map form data to API expected format
+      const apiData = {
+        title: formData.title,
+        description: formData.description,
+        requirements: formData.requirements,
+        videoUrl: formData.contentUrls.filter(url => url.trim())[0] || '', // Use first non-empty URL
+        platform: formData.platforms[0] || 'TIKTOK', // Use first platform
+        budget: formData.budget,
+        paymentRatio: formData.paymentRatio,
+        maxClippers: 50, // Default value
+        minFollowers: 1000, // Default value
+        duration: formData.duration,
+        targetCountries: formData.targetCountries,
+        targetLanguages: formData.targetLanguages,
+      };
 
+      const response = await fetch('/api/advertiser/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle API errors with user-friendly messages
+        let errorMessage = 'Erreur lors de la création de la campagne';
+        
+        if (response.status === 401) {
+          errorMessage = 'Vous devez être connecté pour créer une campagne';
+        } else if (response.status === 400) {
+          if (data.error === 'Insufficient balance') {
+            errorMessage = 'Solde insuffisant. Veuillez recharger votre compte.';
+          } else if (data.error === 'Invalid campaign data') {
+            errorMessage = 'Données de campagne invalides. Veuillez vérifier tous les champs.';
+          } else {
+            errorMessage = data.error || errorMessage;
+          }
+        } else if (response.status === 500) {
+          errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+        }
+        
+        alert(errorMessage);
+        return;
+      }
+
+      // Success - redirect to campaigns list
       router.push('/dashboard/advertiser/campaigns');
     } catch (error) {
       console.error('Error creating campaign:', error);
+      alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
     } finally {
       setIsSubmitting(false);
     }

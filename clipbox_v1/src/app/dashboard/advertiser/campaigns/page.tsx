@@ -140,8 +140,8 @@ export default function CampaignsPage() {
       setCampaigns(transformedData);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
-      // Fallback to mock data on error
-      setCampaigns(mockCampaigns);
+      // Set empty array on error - no mock fallback
+      setCampaigns([]);
     } finally {
       setIsLoading(false);
     }
