@@ -151,17 +151,56 @@ export async function GET(request: NextRequest) {
 
     const igUserInfo = await igUserResponse.json();
 
-    // Store tokens in database
-    await storeOAuthTokens({
-      userId,
-      platform: Platform.INSTAGRAM_REELS,
-      accountId: igUserInfo.id,
+    console.log('=== Instagram OAuth Callback ===');
+    console.log('Instagram user info retrieved:', {
+      id: igUserInfo.id,
       username: igUserInfo.username,
-      profileUrl: `https://www.instagram.com/${igUserInfo.username}`,
-      accessToken: pageAccessToken, // Use page access token for Instagram API calls
-      expiresIn: tokenData.expires_in,
-      followers: igUserInfo.followers_count || 0,
+      followers: igUserInfo.followers_count || 0
     });
+
+    // Store tokens in database with error handling
+    try {
+      console.log('[Instagram OAuth] Attempting to store OAuth tokens for user:', userId);
+      console.log('[Instagram OAuth] Account data:', {
+        platform: Platform.INSTAGRAM_REELS,
+        accountId: igUserInfo.id,
+        username: igUserInfo.username,
+        profileUrl: `https://www.instagram.com/${igUserInfo.username}`,
+        followers: igUserInfo.followers_count || 0,
+        hasAccessToken: !!pageAccessToken,
+        expiresIn: tokenData.expires_in
+      });
+
+      await storeOAuthTokens({
+        userId,
+        platform: Platform.INSTAGRAM_REELS,
+        accountId: igUserInfo.id,
+        username: igUserInfo.username,
+        profileUrl: `https://www.instagram.com/${igUserInfo.username}`,
+        accessToken: pageAccessToken, // Use page access token for Instagram API calls
+        expiresIn: tokenData.expires_in,
+        followers: igUserInfo.followers_count || 0,
+      });
+
+      console.log('[Instagram OAuth] Account connected successfully:', igUserInfo.username);
+      console.log('[Instagram OAuth] Database save completed for user:', userId);
+    } catch (dbError) {
+      console.error('[Instagram OAuth] CRITICAL: Failed to save account to database');
+      console.error('[Instagram OAuth] Database error details:', dbError);
+      
+      if (dbError instanceof Error) {
+        console.error('[Instagram OAuth] Error message:', dbError.message);
+        console.error('[Instagram OAuth] Error stack:', dbError.stack);
+      }
+      
+      // Return error redirect if database save fails
+      return NextResponse.redirect(
+        new URL(
+          '/dashboard/clipper/settings?error=' + encodeURIComponent('Échec de sauvegarde du compte Instagram. Veuillez réessayer.'),
+          request.url
+        )
+      );
+    }
 
     // Clear OAuth cookies
     const response = NextResponse.redirect(
