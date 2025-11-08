@@ -28,39 +28,6 @@ import {
   X
 } from 'lucide-react';
 
-// Mock data - will be replaced with API calls
-const mockJoinedCampaigns = [
-  {
-    id: '1',
-    title: 'Summer Fashion Collection 2024',
-    advertiser: 'Fashion Brand Co.',
-    remunerationPer1000Views: 15,
-    platforms: ['TIKTOK', 'INSTAGRAM_REELS'],
-    endDate: '2024-03-01',
-    thumbnail: 'https://via.placeholder.com/150',
-    directives: 'Montrez les vêtements portés dans un contexte naturel. Focus sur les détails et la qualité.',
-  },
-  {
-    id: '2',
-    title: 'Tech Review - Smartphone Pro Max',
-    advertiser: 'TechCorp',
-    remunerationPer1000Views: 20,
-    platforms: ['YOUTUBE_SHORTS', 'TIKTOK'],
-    endDate: '2024-02-25',
-    thumbnail: 'https://via.placeholder.com/150',
-    directives: 'Unboxing obligatoire. Testez la caméra en conditions réelles.',
-  },
-  {
-    id: '4',
-    title: 'Beauty Tutorial - Maquillage Naturel',
-    advertiser: 'Beauty Essentials',
-    remunerationPer1000Views: 12,
-    platforms: ['INSTAGRAM_REELS', 'YOUTUBE_SHORTS'],
-    endDate: '2024-03-15',
-    thumbnail: 'https://via.placeholder.com/150',
-    directives: 'Tutoriel étape par étape. Lumière naturelle préférée.',
-  },
-];
 
 // Social account interface matching API response
 interface SocialAccount {
@@ -115,6 +82,46 @@ export default function NewSubmissionPage() {
   const [recentVideos, setRecentVideos] = useState<Video[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [videosError, setVideosError] = useState<string | null>(null);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [campaignsError, setCampaignsError] = useState<string | null>(null);
+
+  // Load campaigns from API
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      if (!user) return;
+      
+      setLoadingCampaigns(true);
+      setCampaignsError(null);
+      try {
+        const response = await fetch('/api/campaigns/public?limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          // Map API response to expected format
+          const mappedCampaigns = data.campaigns.map((campaign: any) => ({
+            id: campaign.id,
+            title: campaign.title,
+            advertiser: campaign.advertiserName,
+            remunerationPer1000Views: 15, // Default value - will be calculated from pricePerClip
+            platforms: [campaign.network], // API returns single network, convert to array
+            endDate: campaign.endDate,
+            thumbnail: campaign.imageUrl,
+            directives: campaign.description,
+          }));
+          setCampaigns(mappedCampaigns);
+        } else {
+          setCampaignsError('Erreur lors du chargement des campagnes');
+        }
+      } catch (error) {
+        console.error('Error loading campaigns:', error);
+        setCampaignsError('Erreur lors du chargement des campagnes');
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+
+    loadCampaigns();
+  }, [user]);
 
   // Load social accounts from API
   useEffect(() => {
@@ -144,14 +151,14 @@ export default function NewSubmissionPage() {
 
   useEffect(() => {
     // If a campaign ID is provided in the URL, preselect it
-    if (preselectedCampaignId) {
-      const campaign = mockJoinedCampaigns.find(c => c.id === preselectedCampaignId);
+    if (preselectedCampaignId && campaigns.length > 0) {
+      const campaign = campaigns.find(c => c.id === preselectedCampaignId);
       if (campaign) {
         setSelectedCampaign(campaign);
         setCurrentStep(2);
       }
     }
-  }, [preselectedCampaignId]);
+  }, [preselectedCampaignId, campaigns]);
 
   // Load videos when account is selected and we move to step 3
   useEffect(() => {
@@ -349,11 +356,42 @@ export default function NewSubmissionPage() {
               Étape 1: Sélectionnez une campagne
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Choisissez parmi vos campagnes actives
+              Choisissez parmi les campagnes actives
             </p>
             
-            <div className="space-y-4">
-              {mockJoinedCampaigns.map((campaign) => (
+            {loadingCampaigns ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Chargement des campagnes...
+                </p>
+              </div>
+            ) : campaignsError ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                <p className="text-red-600 dark:text-red-400 mb-4">
+                  {campaignsError}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  Réessayer
+                </button>
+              </div>
+            ) : campaigns.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  Aucune campagne active disponible
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Revenez plus tard pour voir les nouvelles campagnes
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {campaigns.map((campaign) => (
                 <div
                   key={campaign.id}
                   onClick={() => setSelectedCampaign(campaign)}
@@ -404,8 +442,9 @@ export default function NewSubmissionPage() {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
