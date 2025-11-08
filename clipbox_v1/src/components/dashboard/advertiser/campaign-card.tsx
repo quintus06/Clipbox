@@ -99,8 +99,8 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
     YOUTUBE: 'bg-red-600 text-white'
   };
 
-  const status = statusConfig[campaign.status];
-  const StatusIcon = status.icon;
+  const status = statusConfig[campaign.status] || statusConfig.PENDING;
+  const StatusIcon = status?.icon || Clock;
   const budgetUsed = campaign.budget - campaign.remainingBudget;
   const budgetPercentage = (budgetUsed / campaign.budget) * 100;
   const approvalRate = campaign.submissions > 0 
