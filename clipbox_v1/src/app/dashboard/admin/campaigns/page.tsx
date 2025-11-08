@@ -63,6 +63,8 @@ export default function AdminCampaignsPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState<'validate' | 'reject' | 'pause' | 'delete'>('validate');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Fetch campaigns from API
   useEffect(() => {
@@ -192,11 +194,54 @@ export default function AdminCampaignsPage() {
     setShowActionModal(true);
   };
 
-  const confirmAction = () => {
-    console.log(`Action ${actionType} on campaign:`, selectedCampaign);
-    // Implémenter l'action
-    setShowActionModal(false);
-    setSelectedCampaign(null);
+  const confirmAction = async () => {
+    if (!selectedCampaign) return;
+    
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      if (actionType === 'validate') {
+        // Call the validation API
+        const response = await fetch(`/api/admin/campaigns/${selectedCampaign.id}/validate`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors de la validation');
+        }
+        
+        const data = await response.json();
+        
+        // Update the campaign in the local state
+        setCampaigns(prevCampaigns =>
+          prevCampaigns.map(c =>
+            c.id === selectedCampaign.id
+              ? { ...c, status: 'ACTIVE' as const }
+              : c
+          )
+        );
+        
+        // Show success message
+        setSuccessMessage(`Campagne "${selectedCampaign.title}" validée avec succès`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else {
+        // TODO: Implement other actions (reject, pause, delete)
+        console.log(`Action ${actionType} on campaign:`, selectedCampaign);
+      }
+      
+      setShowActionModal(false);
+      setSelectedCampaign(null);
+    } catch (err) {
+      console.error('Error performing action:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'action');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const stats = [
@@ -266,6 +311,17 @@ export default function AdminCampaignsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              {successMessage}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -681,20 +737,29 @@ export default function AdminCampaignsPage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowActionModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                disabled={isProcessing}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Annuler
               </button>
               <button
                 onClick={confirmAction}
-                className={`px-4 py-2 rounded-lg text-white ${
+                disabled={isProcessing}
+                className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   actionType === 'validate' ? 'bg-green-600 hover:bg-green-700' :
                   actionType === 'reject' ? 'bg-red-600 hover:bg-red-700' :
                   actionType === 'pause' ? 'bg-orange-600 hover:bg-orange-700' :
                   'bg-red-600 hover:bg-red-700'
                 }`}
               >
-                Confirmer
+                {isProcessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Traitement...</span>
+                  </>
+                ) : (
+                  'Confirmer'
+                )}
               </button>
             </div>
           </div>
