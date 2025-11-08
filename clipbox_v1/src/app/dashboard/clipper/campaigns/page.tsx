@@ -24,129 +24,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Mock data - will be replaced with API calls
-const mockCampaigns = [
-  {
-    id: '1',
-    title: 'Summer Fashion Collection 2024',
-    advertiser: {
-      name: 'Fashion Brand Co.',
-      verified: true,
-      rating: 4.8,
-      directives: 'Montrez les vêtements portés dans un contexte naturel. Focus sur les détails et la qualité. Utilisez des transitions créatives.',
-    },
-    description: 'Créez des clips tendance pour notre nouvelle collection été. Montrez votre style unique et votre créativité!',
-    requirements: 'Minimum 1000 followers, contenu mode/lifestyle, public 18-35 ans',
-    budget: 10000,
-    remainingBudget: 7500,
-    pricePerClip: 75,
-    remunerationPer1000Views: 15,
-    platforms: ['TIKTOK', 'INSTAGRAM_REELS'],
-    languages: ['FR', 'EN'],
-    countries: ['FR', 'BE', 'CH'],
-    currentClippers: 23,
-    startDate: '2024-02-01',
-    endDate: '2024-03-01',
-    status: 'ACTIVE',
-    tags: ['mode', 'été', 'tendance'],
-    thumbnail: 'https://via.placeholder.com/300x200',
-    totalViews: 125000,
-    totalSubmissions: 45,
-    approvedSubmissions: 38,
-    isSubscribed: false,
-    isEligible: true,
-  },
-  {
-    id: '2',
-    title: 'Tech Review - Smartphone Pro Max',
-    advertiser: {
-      name: 'TechCorp',
-      verified: true,
-      rating: 4.6,
-      directives: 'Unboxing obligatoire. Testez la caméra en conditions réelles. Mentionnez les 3 points forts principaux.',
-    },
-    description: 'Review détaillée de notre nouveau smartphone. Focus sur les fonctionnalités innovantes et la qualité photo/vidéo.',
-    requirements: 'Expérience en tech review, qualité vidéo HD minimum, audience tech-savvy',
-    budget: 5000,
-    remainingBudget: 3200,
-    pricePerClip: 100,
-    remunerationPer1000Views: 20,
-    platforms: ['YOUTUBE_SHORTS', 'TIKTOK'],
-    languages: ['FR'],
-    countries: ['FR'],
-    currentClippers: 12,
-    startDate: '2024-02-05',
-    endDate: '2024-02-25',
-    status: 'ACTIVE',
-    tags: ['tech', 'smartphone', 'review'],
-    thumbnail: 'https://via.placeholder.com/300x200',
-    totalViews: 89000,
-    totalSubmissions: 18,
-    approvedSubmissions: 15,
-    isSubscribed: true,
-    isEligible: true,
-  },
-  {
-    id: '3',
-    title: 'Fitness Challenge - 30 Days Transformation',
-    advertiser: {
-      name: 'FitLife Gym',
-      verified: false,
-      rating: 4.2,
-      directives: 'Montrez votre progression jour après jour. Utilisez nos équipements dans les vidéos. Hashtag #FitLife30Days obligatoire.',
-    },
-    description: 'Documentez votre transformation fitness sur 30 jours avec nos produits et programmes.',
-    requirements: 'Contenu fitness/santé, engagement sur 30 jours, posts réguliers',
-    budget: 8000,
-    remainingBudget: 6000,
-    pricePerClip: 50,
-    remunerationPer1000Views: 10,
-    platforms: ['INSTAGRAM_REELS', 'TIKTOK'],
-    languages: ['FR', 'EN'],
-    countries: ['FR', 'BE', 'CA'],
-    currentClippers: 67,
-    startDate: '2024-02-10',
-    endDate: '2024-03-10',
-    status: 'ACTIVE',
-    tags: ['fitness', 'santé', 'transformation'],
-    thumbnail: 'https://via.placeholder.com/300x200',
-    totalViews: 234000,
-    totalSubmissions: 120,
-    approvedSubmissions: 98,
-    isSubscribed: false,
-    isEligible: false, // Not eligible due to content type mismatch
-  },
-  {
-    id: '4',
-    title: 'Beauty Tutorial - Maquillage Naturel',
-    advertiser: {
-      name: 'Beauty Essentials',
-      verified: true,
-      rating: 4.9,
-      directives: 'Tutoriel étape par étape. Lumière naturelle préférée. Mentionnez les noms des produits utilisés.',
-    },
-    description: 'Créez des tutoriels de maquillage naturel avec notre nouvelle gamme de produits bio.',
-    requirements: 'Expérience en beauté/maquillage, lighting professionnel, audience féminine 16-30 ans',
-    budget: 6000,
-    remainingBudget: 4500,
-    pricePerClip: 60,
-    remunerationPer1000Views: 12,
-    platforms: ['INSTAGRAM_REELS', 'YOUTUBE_SHORTS'],
-    languages: ['FR'],
-    countries: ['FR', 'BE'],
-    currentClippers: 18,
-    startDate: '2024-02-15',
-    endDate: '2024-03-15',
-    status: 'ACTIVE',
-    tags: ['beauté', 'maquillage', 'tutoriel', 'bio'],
-    thumbnail: 'https://via.placeholder.com/300x200',
-    totalViews: 156000,
-    totalSubmissions: 25,
-    approvedSubmissions: 22,
-    isSubscribed: false,
-    isEligible: true,
-  },
-];
+// Campaign data will be fetched from API
 
 const platformIcons: Record<string, string> = {
   TIKTOK: '📱',
@@ -162,9 +40,10 @@ const statusColors: Record<string, string> = {
 };
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState(mockCampaigns);
-  const [filteredCampaigns, setFilteredCampaigns] = useState(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     platform: 'all',
@@ -176,8 +55,63 @@ export default function CampaignsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setLoading(false), 1000);
+    // Load campaigns from API
+    const loadCampaigns = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await fetch('/api/campaigns/public?limit=100');
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors du chargement des campagnes');
+        }
+        
+        const data = await response.json();
+        
+        // Transform API data to match component expectations
+        const transformedCampaigns = (data.campaigns || []).map((campaign: any) => ({
+          id: campaign.id,
+          title: campaign.title,
+          advertiser: {
+            name: campaign.advertiserName,
+            verified: true,
+            rating: 4.5,
+            directives: campaign.description,
+          },
+          description: campaign.description,
+          requirements: '',
+          budget: campaign.budget,
+          remainingBudget: campaign.budget - campaign.budgetSpent,
+          pricePerClip: 0,
+          remunerationPer1000Views: 0,
+          platforms: [campaign.network],
+          languages: ['FR'],
+          countries: ['FR'],
+          currentClippers: campaign.participantsCount,
+          startDate: campaign.createdAt,
+          endDate: campaign.endDate,
+          status: 'ACTIVE',
+          tags: [],
+          thumbnail: campaign.imageUrl,
+          totalViews: 0,
+          totalSubmissions: campaign.participantsCount,
+          approvedSubmissions: 0,
+          isSubscribed: false,
+          isEligible: true,
+        }));
+        
+        setCampaigns(transformedCampaigns);
+      } catch (err) {
+        console.error('Error loading campaigns:', err);
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des campagnes');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCampaigns();
   }, []);
 
   useEffect(() => {
@@ -189,7 +123,7 @@ export default function CampaignsPage() {
       filtered = filtered.filter(campaign =>
         campaign.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         campaign.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        campaign.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        (campaign.tags && campaign.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())))
       );
     }
 
@@ -452,6 +386,29 @@ export default function CampaignsPage() {
               <CampaignCard key={campaign.id} campaign={campaign} onJoin={handleJoinCampaign} onLeave={handleLeaveCampaign} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                Erreur de chargement
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {error}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            Réessayer
+          </button>
         </div>
       )}
 
