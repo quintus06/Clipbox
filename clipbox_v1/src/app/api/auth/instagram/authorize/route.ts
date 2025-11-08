@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Instagram uses Facebook OAuth with Instagram-specific scopes
     const authUrl = 'https://www.facebook.com/v18.0/dialog/oauth?' +
       new URLSearchParams({
-        client_id: process.env.FACEBOOK_APP_ID!,
+        client_id: process.env.INSTAGRAM_CLIENT_ID!,
         redirect_uri: process.env.NODE_ENV === 'production'
           ? process.env.INSTAGRAM_REDIRECT_URI_PROD!
           : process.env.INSTAGRAM_REDIRECT_URI!,
