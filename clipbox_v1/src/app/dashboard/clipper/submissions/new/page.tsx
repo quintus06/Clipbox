@@ -270,19 +270,31 @@ export default function NewSubmissionPage() {
     router.push('/dashboard/clipper/submissions');
   };
 
+  // Helper function to check platform compatibility
+  const isPlatformCompatible = (accountPlatform: string, campaignPlatform: string): boolean => {
+    // YouTube and YouTube Shorts are compatible
+    if ((accountPlatform === 'YOUTUBE' || accountPlatform === 'YOUTUBE_SHORTS') &&
+        (campaignPlatform === 'YOUTUBE' || campaignPlatform === 'YOUTUBE_SHORTS')) {
+      return true;
+    }
+    
+    // Instagram and Instagram Reels are compatible
+    if ((accountPlatform === 'INSTAGRAM' || accountPlatform === 'INSTAGRAM_REELS') &&
+        (campaignPlatform === 'INSTAGRAM' || campaignPlatform === 'INSTAGRAM_REELS')) {
+      return true;
+    }
+    
+    // Otherwise, platforms must match exactly
+    return accountPlatform === campaignPlatform;
+  };
+
   // Filter accounts based on selected campaign platforms
   const filteredAccounts = selectedCampaign
-    ? socialAccounts.filter(account => {
-        const platformMap: Record<string, string[]> = {
-          'TIKTOK': ['TIKTOK'],
-          'INSTAGRAM_REELS': ['INSTAGRAM_REELS'],
-          'YOUTUBE_SHORTS': ['YOUTUBE_SHORTS'],
-          'TWITTER': ['TWITTER'],
-        };
-        return selectedCampaign.platforms.some((p: string) =>
-          platformMap[account.platform]?.includes(p)
-        );
-      })
+    ? socialAccounts.filter(account =>
+        selectedCampaign.platforms.some((p: string) =>
+          isPlatformCompatible(account.platform, p)
+        )
+      )
     : [];
 
   // For YouTube accounts, use fetched videos; for others, show empty state
