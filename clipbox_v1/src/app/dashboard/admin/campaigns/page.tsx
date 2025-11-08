@@ -71,8 +71,8 @@ export default function AdminCampaignsPage() {
       setError(null);
       
       try {
-        // Admin should see ALL campaigns, not just ACTIVE ones
-        const response = await fetch('/api/campaigns/public?limit=1000');
+        // Admin should see ALL campaigns, including DRAFT status
+        const response = await fetch('/api/admin/campaigns');
         
         if (!response.ok) {
           const errorData = await response.json();
