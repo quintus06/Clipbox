@@ -35,7 +35,7 @@ interface Campaign {
     company: string;
     verified: boolean;
   };
-  status: 'pending' | 'active' | 'paused' | 'completed' | 'rejected';
+  status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'REJECTED';
   budget: number;
   spent: number;
   submissions: number;
@@ -53,6 +53,7 @@ export default function AdminCampaignsPage() {
   
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'date' | 'budget' | 'status'>('date');
@@ -63,120 +64,74 @@ export default function AdminCampaignsPage() {
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState<'validate' | 'reject' | 'pause' | 'delete'>('validate');
 
-  // Mock data
+  // Fetch campaigns from API
   useEffect(() => {
-    const mockCampaigns: Campaign[] = [
-      {
-        id: '1',
-        title: 'Campagne Nike Air Max 2024',
-        advertiser: {
-          name: 'John Doe',
-          company: 'Nike France',
-          verified: true
-        },
-        status: 'pending',
-        budget: 50000,
-        spent: 0,
-        submissions: 0,
-        views: 0,
-        startDate: new Date('2024-02-01'),
-        endDate: new Date('2024-03-01'),
-        platforms: ['TikTok', 'Instagram'],
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        priority: 'high'
-      },
-      {
-        id: '2',
-        title: 'Lancement Produit Cosmétique Bio',
-        advertiser: {
-          name: 'Marie Dupont',
-          company: 'Beauty Corp',
-          verified: true
-        },
-        status: 'active',
-        budget: 25000,
-        spent: 12500,
-        submissions: 45,
-        views: 125000,
-        startDate: new Date('2024-01-15'),
-        endDate: new Date('2024-02-15'),
-        platforms: ['Instagram', 'YouTube'],
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        priority: 'medium'
-      },
-      {
-        id: '3',
-        title: 'Promotion Application Mobile',
-        advertiser: {
-          name: 'Tech Startup',
-          company: 'AppDev Inc',
-          verified: false
-        },
-        status: 'pending',
-        budget: 15000,
-        spent: 0,
-        submissions: 0,
-        views: 0,
-        startDate: new Date('2024-02-10'),
-        endDate: new Date('2024-02-25'),
-        platforms: ['TikTok'],
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        priority: 'medium'
-      },
-      {
-        id: '4',
-        title: 'Collection Été 2024',
-        advertiser: {
-          name: 'Fashion Brand',
-          company: 'Style Co',
-          verified: true
-        },
-        status: 'active',
-        budget: 35000,
-        spent: 28000,
-        submissions: 89,
-        views: 450000,
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-02-28'),
-        platforms: ['Instagram', 'TikTok', 'YouTube'],
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        priority: 'low'
-      },
-      {
-        id: '5',
-        title: 'Campagne Alimentaire Healthy',
-        advertiser: {
-          name: 'Food Company',
-          company: 'Healthy Foods',
-          verified: true
-        },
-        status: 'paused',
-        budget: 20000,
-        spent: 8000,
-        submissions: 23,
-        views: 67000,
-        startDate: new Date('2024-01-20'),
-        endDate: new Date('2024-02-20'),
-        platforms: ['Instagram'],
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        priority: 'low'
+    const loadCampaigns = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Admin should see ALL campaigns, not just ACTIVE ones
+        const response = await fetch('/api/campaigns/public?limit=1000');
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors du chargement des campagnes');
+        }
+        
+        const data = await response.json();
+        
+        // Transform API data to match component expectations
+        const transformedCampaigns: Campaign[] = (data.campaigns || []).map((campaign: any) => {
+          // Calculate priority based on budget
+          let priority: 'low' | 'medium' | 'high' = 'low';
+          if (campaign.budget > 30000) priority = 'high';
+          else if (campaign.budget > 15000) priority = 'medium';
+          
+          return {
+            id: campaign.id,
+            title: campaign.title,
+            advertiser: {
+              name: campaign.advertiserName,
+              company: campaign.advertiserName,
+              verified: true,
+            },
+            status: campaign.status || 'ACTIVE',
+            budget: campaign.budget,
+            spent: campaign.budgetSpent || 0,
+            submissions: campaign.participantsCount || 0,
+            views: 0,
+            startDate: new Date(campaign.createdAt),
+            endDate: new Date(campaign.endDate),
+            platforms: [campaign.network],
+            createdAt: new Date(campaign.createdAt),
+            priority,
+          };
+        });
+        
+        // Filter by status if needed
+        let filtered = transformedCampaigns;
+        if (statusFilter !== 'all') {
+          filtered = transformedCampaigns.filter(c => c.status.toLowerCase() === statusFilter.toLowerCase());
+        }
+        
+        setCampaigns(filtered);
+      } catch (err) {
+        console.error('Error loading campaigns:', err);
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des campagnes');
+      } finally {
+        setIsLoading(false);
       }
-    ];
+    };
 
-    // Filter by status if needed
-    let filtered = mockCampaigns;
-    if (statusFilter !== 'all') {
-      filtered = mockCampaigns.filter(c => c.status === statusFilter);
-    }
-
-    setTimeout(() => {
-      setCampaigns(filtered);
-      setIsLoading(false);
-    }, 1000);
+    loadCampaigns();
   }, [statusFilter]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'draft':
+        return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
       case 'pending':
         return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30';
       case 'active':
@@ -193,7 +148,10 @@ export default function AdminCampaignsPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'draft':
+        return <Edit className="h-4 w-4" />;
       case 'pending':
         return <Clock className="h-4 w-4" />;
       case 'active':
@@ -251,14 +209,14 @@ export default function AdminCampaignsPage() {
     },
     {
       label: 'En attente',
-      value: campaigns.filter(c => c.status === 'pending').length,
+      value: campaigns.filter(c => c.status.toLowerCase() === 'pending' || c.status.toLowerCase() === 'draft').length,
       icon: Clock,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/30'
     },
     {
       label: 'Actives',
-      value: campaigns.filter(c => c.status === 'active').length,
+      value: campaigns.filter(c => c.status.toLowerCase() === 'active').length,
       icon: Play,
       color: 'text-green-600',
       bgColor: 'bg-green-100 dark:bg-green-900/30'
@@ -276,6 +234,32 @@ export default function AdminCampaignsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                Erreur de chargement
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {error}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }
@@ -350,6 +334,7 @@ export default function AdminCampaignsPage() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900"
             >
               <option value="all">Tous les statuts</option>
+              <option value="draft">Brouillon</option>
               <option value="pending">En attente</option>
               <option value="active">Actives</option>
               <option value="paused">En pause</option>
@@ -529,11 +514,12 @@ export default function AdminCampaignsPage() {
                     <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(campaign.status)}`}>
                       {getStatusIcon(campaign.status)}
                       <span>
-                        {campaign.status === 'pending' && 'En attente'}
-                        {campaign.status === 'active' && 'Active'}
-                        {campaign.status === 'paused' && 'En pause'}
-                        {campaign.status === 'completed' && 'Terminée'}
-                        {campaign.status === 'rejected' && 'Rejetée'}
+                        {campaign.status.toLowerCase() === 'draft' && 'Brouillon'}
+                        {campaign.status.toLowerCase() === 'pending' && 'En attente'}
+                        {campaign.status.toLowerCase() === 'active' && 'Active'}
+                        {campaign.status.toLowerCase() === 'paused' && 'En pause'}
+                        {campaign.status.toLowerCase() === 'completed' && 'Terminée'}
+                        {campaign.status.toLowerCase() === 'rejected' && 'Rejetée'}
                       </span>
                     </div>
                   </td>
@@ -590,7 +576,7 @@ export default function AdminCampaignsPage() {
                         <Eye className="h-4 w-4" />
                       </button>
                       
-                      {campaign.status === 'pending' && (
+                      {(campaign.status.toLowerCase() === 'pending' || campaign.status.toLowerCase() === 'draft') && (
                         <>
                           <button
                             onClick={() => handleCampaignAction(campaign, 'validate')}
@@ -609,7 +595,7 @@ export default function AdminCampaignsPage() {
                         </>
                       )}
                       
-                      {campaign.status === 'active' && (
+                      {campaign.status.toLowerCase() === 'active' && (
                         <button
                           onClick={() => handleCampaignAction(campaign, 'pause')}
                           className="p-1 text-orange-600 hover:text-orange-700"
@@ -619,7 +605,7 @@ export default function AdminCampaignsPage() {
                         </button>
                       )}
                       
-                      {campaign.status === 'paused' && (
+                      {campaign.status.toLowerCase() === 'paused' && (
                         <button
                           className="p-1 text-green-600 hover:text-green-700"
                           title="Reprendre"
